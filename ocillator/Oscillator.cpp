@@ -3,6 +3,7 @@
 //
 #include <cmath>
 #include "Oscillator.h"
+#include <iostream>
 
 Oscillator::Oscillator(double sampleRate)
 : sampleRate(sampleRate),
@@ -10,7 +11,7 @@ phase(0.0),
 frequency(440.0),
 frequencyOffset(0.0),
 phaseStep(0.0),
-waveform(Waveform::SAW){
+waveform(Waveform::SQUARE){
     updatePhaseStep();
 }
 
@@ -35,12 +36,12 @@ void Oscillator::setFrequencyOffset(double offset) {
 void Oscillator::generate(float *buffer, int frames) {
     for (int i = 0; i < frames; ++i) {
         float sample = 0.0f;
-        switch (waveform) {
+        switch (this->waveform) {
             case SINE:
                 sample = static_cast<float>(0.5 * sin(phase));
             break;
 
-            case SQUARE:
+            case  SQUARE:
                 sample = sin(phase) >= 0.0 ? 0.5f : -0.5f;
             break;
 
@@ -56,6 +57,12 @@ void Oscillator::generate(float *buffer, int frames) {
         if (phase >=2.0* M_PI) {
             phase -= 2.0*M_PI;
         }
+    }
+    // me permet de savoir quel onde je joue j'attribut un num a chaque onde pour tester si ca change bien
+    static bool shown = false;
+    if (!shown) {
+        std::cout << "Waveform utilisée : " << waveform << std::endl;
+        shown = true;
     }
 }
 
