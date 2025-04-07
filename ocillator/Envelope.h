@@ -27,7 +27,7 @@ private:
     double attackTime;
     double releaseTime;
 
-    void updateIncrement();
+    void updateIncrements();
 
 };
 
