@@ -14,7 +14,7 @@ class Oscillator {
 
     void setFrequency(double hz);
     void setWaveform(Waveform waveform);
-    void  setfrequencyOffset(double offset);
+    void  setFrequencyOffset(double offset);
     void generate(float* buffer,int frames);
 
 

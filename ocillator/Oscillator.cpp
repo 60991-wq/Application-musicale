@@ -10,7 +10,7 @@ phase(0.0),
 frequency(440.0),
 frequencyOffset(0.0),
 phaseStep(0.0),
-waveform(Waveform::SINE){
+waveform(Waveform::SAW){
     updatePhaseStep();
 }
 
@@ -22,10 +22,11 @@ void Oscillator::setWaveform(Waveform waveform) {
 this->waveform = waveform;
 }
 void Oscillator::updatePhaseStep() {
-    phaseStep = 2.0 *M_PI * frequency/frequencyOffset(sampleRate);
+    double effectiveFrequency = frequency+frequencyOffset;
+    phaseStep = 2.0 *M_PI * effectiveFrequency/sampleRate;
 }
 
-void Oscillator::setfrequencyOffset(double offset) {
+void Oscillator::setFrequencyOffset(double offset) {
     this->frequencyOffset = offset;
     updatePhaseStep();
 
