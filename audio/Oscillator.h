@@ -10,7 +10,7 @@
 class Oscillator {
     public:
     enum class Waveform {SINE, SQUARE, SAW}; // je rajoute classe pour eviter les conversion
-     explicit Oscillator(double sampleRate);
+     explicit Oscillator();
 
     void setFrequency(double hz);
     void setWaveform(Waveform waveform);
@@ -18,8 +18,8 @@ class Oscillator {
     void generate(float* buffer,int frames);
 
     // ici c'est les methode pour l'envelope
-    void noteOn();
-    void noteOff();
+   // void noteOn();
+    //void noteOff();
 
 
 
@@ -30,8 +30,6 @@ private:
     double sampleRate;
     double frequencyOffset;
     Waveform waveform;
-
-    Envelope envelope;
 
 
     void updatePhaseStep();

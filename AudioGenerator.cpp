@@ -1,10 +1,11 @@
 #include <iostream>
 #include "AudioGenerator.h"
+#include "util/Constants.h"
+#include <cmath>
 
-constexpr int FRAMES_PER_BUFFER {256};
-constexpr int SAMPLE_RATE {44100};
 
-void AudioGenerator::init() {
+void AudioGenerator::init(Oscillator *oscillator) {
+this->oscillator = oscillator;
 
     PaError errorInit = Pa_Initialize();
     if( errorInit != paNoError ) {
@@ -23,12 +24,13 @@ void AudioGenerator::init() {
                                        SAMPLE_RATE,
                                        FRAMES_PER_BUFFER,
                                        audioCallback,
-                                       nullptr );
+                                       this );
 
     errorStream = Pa_StartStream( stream );
     if( errorStream != paNoError ) {
         std::cerr << "PortAudio error in Pa_StartStream(): "
                   << Pa_GetErrorText( errorStream ) << std::endl;
+        return;
     }
 }
 
@@ -39,9 +41,18 @@ int AudioGenerator::audioCallback(const void *inputBuffer,
                                   PaStreamCallbackFlags statusFlags,
                                   void *userData) {
 
-    // DO STUFF WITH OUTPUTBUFFER
-    // ...
 
-    return 0;
+    auto* generator = static_cast<AudioGenerator*>(userData);
+    float* audioBuffer = reinterpret_cast<float*>(outputBuffer);
+
+    // Remplir le buffer avec des zéros pour commencer
+    std::fill(audioBuffer, audioBuffer + framesPerBuffer * 2, 0.0f);
+
+    // Générer le son avec ton Oscillator
+    if (generator->oscillator) {
+        generator->oscillator->generate(audioBuffer, static_cast<int>(framesPerBuffer));
+    }
+
+    return paContinue;
 }
 

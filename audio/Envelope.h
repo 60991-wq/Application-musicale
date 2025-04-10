@@ -15,14 +15,16 @@ public:
 
     void setAttackTime(double seconds);
     void setReleaseTime(double seconds);
+    void setSustainLevel(double level);
 
-    void getValue() const;// le volume est entre 0.0 et 1.0
+    double getValue() const;// le volume est entre 0.0 et 1.0
     void update();
 
 private:
-    enum  State {IDLE, ATTACK, RELEASE} state;
+    enum  State {IDLE, ATTACK,DECAY, SUSTAIN, RELEASE} state;
     double sampleRate;
     double envelopeValue;
+    double sustainLevel;
 
     double attackTime;
     double releaseTime;

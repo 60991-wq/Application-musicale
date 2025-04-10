@@ -19,14 +19,15 @@ add_executable(60991 main.cpp MainWindow.cpp AudioGenerator.cpp
             ./libraries/imgui/imgui_tables.cpp
             ./libraries/imgui/backends/imgui_impl_sdl3.cpp
             ./libraries/imgui/backends/imgui_impl_sdlrenderer3.cpp
-        ocillator/Oscillator.cpp
-        ocillator/Oscillator.h
-        ocillator/Envelope.cpp
-        ocillator/Envelope.h
-        ocillator/Filter.cpp
-        ocillator/Filter.h
-        ocillator/Delay.cpp
-        ocillator/Delay.h
+        audio/Oscillator.cpp
+        audio/Oscillator.h
+        audio/Envelope.cpp
+        audio/Envelope.h
+        audio/Filter.cpp
+        audio/Filter.h
+        audio/Delay.cpp
+        audio/Delay.h
+        util/Constants.h
 )
 if (APPLE)
     set(CMAKE_INSTALL_RPATH
