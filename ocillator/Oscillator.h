@@ -1,7 +1,7 @@
 //
 // Created by anini on 03-04-25.
 //
-
+#include "Envelope.h"
 #ifndef OSCILLATOR_H
 #define OSCILLATOR_H
 
@@ -9,13 +9,18 @@
 
 class Oscillator {
     public:
-    enum Waveform {SINE, SQUARE, SAW};
+    enum class Waveform {SINE, SQUARE, SAW}; // je rajoute classe pour eviter les conversion
      explicit Oscillator(double sampleRate);
 
     void setFrequency(double hz);
     void setWaveform(Waveform waveform);
-    void  setFrequencyOffset(double offset);
+    void setFrequencyOffset(double offset);
     void generate(float* buffer,int frames);
+
+    // ici c'est les methode pour l'envelope
+    void noteOn();
+    void noteOff();
+
 
 
 private:
@@ -25,6 +30,8 @@ private:
     double sampleRate;
     double frequencyOffset;
     Waveform waveform;
+
+    Envelope envelope;
 
 
     void updatePhaseStep();

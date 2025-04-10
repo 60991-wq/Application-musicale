@@ -34,7 +34,7 @@ int main() {
     PaError err;
 
     // Configuration de l'oscillateur
-    osc.setWaveform(Oscillator::SINE);
+    osc.setWaveform(Oscillator:: Waveform::SAW);
     osc.setFrequency(440.0);
     osc.setFrequencyOffset(0.0);
 
