@@ -1,6 +1,7 @@
 #include "Oscillator.h"
 #include <cmath>
 #include "../util/Constants.h" // pour SAMPLE_RATE et TWO_PI
+#include "Envelope.h"
 #include<iostream>
 
  Oscillator::Oscillator()
@@ -8,7 +9,9 @@
       frequency(440.0),
       frequencyOffset(0.0),
       phase(0.0),
-      waveform(Waveform::SQUARE)
+      waveform(Waveform::SQUARE),
+     envelope (SAMPLE_RATE)
+
 {
     updatePhaseStep();
 }
@@ -32,6 +35,22 @@ void Oscillator::updatePhaseStep() {
     phaseStep = TWO_PI * effectiveFreq / sampleRate;
 }
 
+void Oscillator::noteOn() {
+     envelope.noteOn();
+ }
+void Oscillator::noteOff() {
+     envelope.noteOff();
+ }
+
+void Oscillator::setEnvelopeParams(double attack, double decay, double sustain, double release) {
+     envelope.setAttackTime(attack);
+     envelope.setDecayTime(decay);
+     envelope.setSustainLevel(sustain);
+     envelope.setReleaseTime(release);
+ }
+
+
+
 void Oscillator::generate(float* buffer, int frames) {
     for (int i = 0; i < frames; ++i) {
         float sample = 0.0f;
@@ -47,6 +66,10 @@ void Oscillator::generate(float* buffer, int frames) {
                 sample = static_cast<float>((1.0 - (phase / M_PI)) * 0.5);
             break;
         }
+
+        float gain = static_cast<float>(envelope.getValue());
+        envelope.update();
+        sample *= gain;
 
         buffer[2 * i]     += sample;
         buffer[2 * i + 1] += sample;

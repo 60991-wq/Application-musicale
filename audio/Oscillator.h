@@ -18,12 +18,14 @@ class Oscillator {
     void generate(float* buffer,int frames);
 
     // ici c'est les methode pour l'envelope
-   // void noteOn();
-    //void noteOff();
+    void noteOn();
+    void noteOff();
+    void setEnvelopeParams(double attack, double decay, double sustain, double release);
 
 
 
 private:
+    Envelope envelope;
     double phase;
     double phaseStep;
     double frequency;
