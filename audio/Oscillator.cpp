@@ -2,6 +2,7 @@
 #include <cmath>
 #include "../util/Constants.h" // pour SAMPLE_RATE et TWO_PI
 #include "Envelope.h"
+#include "Filter.h"
 #include<iostream>
 
  Oscillator::Oscillator()
@@ -10,7 +11,8 @@
       frequencyOffset(0.0),
       phase(0.0),
       waveform(Waveform::SQUARE),
-     envelope (SAMPLE_RATE)
+     envelope (SAMPLE_RATE),
+    filter(SAMPLE_RATE)
 
 {
     updatePhaseStep();
@@ -49,6 +51,10 @@ void Oscillator::setEnvelopeParams(double attack, double decay, double sustain, 
      envelope.setReleaseTime(release);
  }
 
+void Oscillator::setCutoff(double cutoffHz) {
+     filter.setCutoff(cutoffHz);
+ }
+
 
 
 void Oscillator::generate(float* buffer, int frames) {
@@ -66,10 +72,12 @@ void Oscillator::generate(float* buffer, int frames) {
                 sample = static_cast<float>((1.0 - (phase / M_PI)) * 0.5);
             break;
         }
-
+// application de l'envelope
         float gain = static_cast<float>(envelope.getValue());
         envelope.update();
         sample *= gain;
+        // application du filter passe bas
+        sample = filter.process(sample);
 
         buffer[2 * i]     += sample;
         buffer[2 * i + 1] += sample;

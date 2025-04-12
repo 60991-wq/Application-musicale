@@ -2,6 +2,7 @@
 // Created by anini on 03-04-25.
 //
 #include "Envelope.h"
+#include "Filter.h"
 #ifndef OSCILLATOR_H
 #define OSCILLATOR_H
 
@@ -22,7 +23,7 @@ class Oscillator {
     void noteOff();
     void setEnvelopeParams(double attack, double decay, double sustain, double release);
 
-
+    void setCutoff(double cutoffHz);
 
 private:
     Envelope envelope;
@@ -32,6 +33,7 @@ private:
     double sampleRate;
     double frequencyOffset;
     Waveform waveform;
+    Filter filter;
 
 
     void updatePhaseStep();
