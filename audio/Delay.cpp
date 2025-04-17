@@ -17,6 +17,17 @@ Delay::Delay(double sampleRate)
     updateReadIndex();
 
 }
+#include "Delay.h"
+
+void Delay::setDelayTime(double seconds) {
+    delayTime = seconds;
+    updateReadIndex();
+}
+
+void Delay::setMix(float mix) {
+    delayMix = mix;
+}
+
 void Delay::updateReadIndex() {
     int delaySamples = static_cast<int>(sampleRate * delayTime);
     readIndex = writeIndex - delaySamples;

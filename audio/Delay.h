@@ -10,7 +10,7 @@
 class Delay {
 public:
     Delay(double sampleRate);
-    void setDelay(double seconds);
+    void setDelayTime(double seconds);
     void setMix(float mix);
     void process(float* buffer , int frames);
 

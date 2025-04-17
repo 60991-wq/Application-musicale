@@ -4,8 +4,9 @@
 #include <cmath>
 
 
-void AudioGenerator::init(Oscillator *oscillator) {
+void AudioGenerator::init(Oscillator *oscillator, Delay *delay) {
 this->oscillator = oscillator;
+    this->delay = delay;
 
     PaError errorInit = Pa_Initialize();
     if( errorInit != paNoError ) {
@@ -51,6 +52,10 @@ int AudioGenerator::audioCallback(const void *inputBuffer,
     // Générer le son avec ton Oscillator
     if (generator->oscillator) {
         generator->oscillator->generate(audioBuffer, static_cast<int>(framesPerBuffer));
+    }
+
+    if (generator->delay) {
+        generator->delay->process(audioBuffer, static_cast<int>(framesPerBuffer));
     }
 
     return paContinue;

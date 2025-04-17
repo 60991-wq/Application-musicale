@@ -4,14 +4,14 @@
 #include "audio/Oscillator.h"
 #include <thread>
 #include <chrono>
-
+#include "util/Constants.h"
 #include "audio/Delay.h"
 
 
 int main() {
-/*
+
     Oscillator oscillator;
-    oscillator.setWaveform(Oscillator::Waveform::SQUARE);
+    oscillator.setWaveform(Oscillator::Waveform::SAW);
     //std::cout << "Forme d'onde sélectionnée : " << static_cast<int>(Oscillator::Waveform::SQUARE) << std::endl;
     oscillator.setFrequency(440.0f);
 
@@ -23,8 +23,13 @@ int main() {
     );
     oscillator.setCutoff(800.0);
 
+
+    Delay delay(SAMPLE_RATE);
+    delay.setDelayTime(0.5);  // 500 ms
+    delay.setMix(0.4f);
+
     AudioGenerator generator;
-    generator.init(&oscillator);
+    generator.init(&oscillator, &delay);
 
     oscillator.noteOn();
     std::cout << "Note ON (attack + decay + sustain phase)" << std::endl;
@@ -37,11 +42,9 @@ int main() {
 
     std::cout << "Appuyez sur Entrée pour quitter..." << std::endl;
 
-    std::cin.get();*/
+    std::cin.get();
 
-    Delay delay(Sample);
-    delay.setDelay(0.5);  // 500 ms
-    delay.setMix(0.4f);       // volume des échos
+
 
 
 

@@ -3,11 +3,13 @@
 
 #include "portaudio.h"
 #include "audio/Oscillator.h"
+#include "audio/Delay.h"
 
 class AudioGenerator {
 public:
-    void init(Oscillator* oscillator);
+    void init(Oscillator* oscillator,Delay* delay);
     Oscillator* oscillator = nullptr;
+    Delay* delay = nullptr;
 
 private:
     static int audioCallback( const void *inputBuffer, void *outputBuffer,
