@@ -5,9 +5,11 @@
 #include <thread>
 #include <chrono>
 
+#include "audio/Delay.h"
+
 
 int main() {
-
+/*
     Oscillator oscillator;
     oscillator.setWaveform(Oscillator::Waveform::SQUARE);
     //std::cout << "Forme d'onde sélectionnée : " << static_cast<int>(Oscillator::Waveform::SQUARE) << std::endl;
@@ -35,7 +37,16 @@ int main() {
 
     std::cout << "Appuyez sur Entrée pour quitter..." << std::endl;
 
-    std::cin.get();
+    std::cin.get();*/
+
+    Delay delay(Sample);
+    delay.setDelay(0.5);  // 500 ms
+    delay.setMix(0.4f);       // volume des échos
+
+
+
+
+
     return 0;
 
 }
