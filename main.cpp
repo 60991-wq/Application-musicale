@@ -7,49 +7,37 @@
 #include "util/Constants.h"
 #include "audio/Delay.h"
 
-
 int main() {
+    Oscillator osc1(SAMPLE_RATE);
+    Oscillator osc2(SAMPLE_RATE);
 
-    Oscillator oscillator;
-    oscillator.setWaveform(Oscillator::Waveform::SAW);
-    //std::cout << "Forme d'onde sélectionnée : " << static_cast<int>(Oscillator::Waveform::SQUARE) << std::endl;
-    oscillator.setFrequency(440.0f);
+    osc1.setWaveform(Oscillator::Waveform::SINE);
+    osc1.setFrequency(440.0);
+    osc1.setEnvelopeParams(0.5, 0.3, 0.6, 1.0);
+    osc1.setCutoff(800.0);
 
-    oscillator.setEnvelopeParams(
-        0.5,  // Attack time en secondes
-        0.3,  // Decay time
-        0.6,  // Sustain level (entre 0.0 et 1.0)
-        1.0   // Release time
-    );
-    oscillator.setCutoff(800.0);
-
+    osc2.setWaveform(Oscillator::Waveform::SQUARE);
+    osc2.setFrequency(220.0);
+    osc2.setEnvelopeParams(0.4, 0.2, 0.7, 1.2);
+    osc2.setCutoff(600.0);
 
     Delay delay(SAMPLE_RATE);
-    delay.setDelayTime(0.5);  // 500 ms
+    delay.setDelayTime(0.5);
     delay.setMix(0.4f);
 
     AudioGenerator generator;
-    generator.init(&oscillator, &delay);
+    generator.init(&osc1, &delay); // Par défaut, on écoute osc1. (On pourra mixer ensuite)
 
-    oscillator.noteOn();
-    std::cout << "Note ON (attack + decay + sustain phase)" << std::endl;
-    std::this_thread::sleep_for(std::chrono::seconds(3));
+    osc1.noteOn();
 
 
-    oscillator.noteOff();
-    std::cout << "Note OFF (release phase)" << std::endl;
-    std::this_thread::sleep_for(std::chrono::seconds(2));
+    MainWindow window;
+    window.oscillator1 = &osc1;
+    window.oscillator2 = &osc2;
+    window.delay = &delay;
 
-    std::cout << "Appuyez sur Entrée pour quitter..." << std::endl;
-
-    std::cin.get();
-
-
-
-
-
-
+    window.init();
+    window.run();
 
     return 0;
-
 }

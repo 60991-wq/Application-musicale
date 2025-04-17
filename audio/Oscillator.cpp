@@ -5,14 +5,14 @@
 #include "Filter.h"
 #include<iostream>
 
- Oscillator::Oscillator()
-    : sampleRate(SAMPLE_RATE),
+ Oscillator::Oscillator(double sampleRate)
+    : sampleRate(sampleRate),
       frequency(440.0),
       frequencyOffset(0.0),
       phase(0.0),
       waveform(Waveform::SQUARE),
-     envelope (SAMPLE_RATE),
-    filter(SAMPLE_RATE)
+     envelope (sampleRate),
+    filter(sampleRate)
 
 {
     updatePhaseStep();

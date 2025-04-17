@@ -11,7 +11,7 @@
 class Oscillator {
     public:
     enum class Waveform {SINE, SQUARE, SAW}; // je rajoute classe pour eviter les conversion
-     explicit Oscillator();
+     explicit Oscillator(double sampleRate);
 
     void setFrequency(double hz);
     void setWaveform(Waveform waveform);
