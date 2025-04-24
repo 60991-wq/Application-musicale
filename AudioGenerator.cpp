@@ -46,9 +46,6 @@ int AudioGenerator::audioCallback(const void *inputBuffer,
     auto* generator = static_cast<AudioGenerator*>(userData);
     float* audioBuffer = reinterpret_cast<float*>(outputBuffer);
 
-    // Remplir le buffer avec des zéros pour commencer
-    std::fill(audioBuffer, audioBuffer + framesPerBuffer * 2, 0.0f);
-
     // Générer le son avec ton Oscillator
     if (generator->oscillator) {
         generator->oscillator->generate(audioBuffer, static_cast<int>(framesPerBuffer));

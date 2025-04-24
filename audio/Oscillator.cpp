@@ -44,10 +44,9 @@ void Oscillator::noteOff() {
      envelope.noteOff();
  }
 
-void Oscillator::setEnvelopeParams(double attack, double decay, double sustain, double release) {
+void Oscillator::setEnvelopeParams(double attack, double release) {
      envelope.setAttackTime(attack);
-     envelope.setDecayTime(decay);
-     envelope.setSustainLevel(sustain);
+
      envelope.setReleaseTime(release);
  }
 
@@ -79,8 +78,8 @@ void Oscillator::generate(float* buffer, int frames) {
         // application du filter passe bas
         sample = filter.process(sample);
 
-        buffer[2 * i]     += sample;
-        buffer[2 * i + 1] += sample;
+        buffer[2 * i] = sample;
+        buffer[2 * i + 1] = sample;
 
         phase += phaseStep;
         if (phase >= TWO_PI)
@@ -93,3 +92,4 @@ void Oscillator::generate(float* buffer, int frames) {
          shown = true;
      }
 }
++
