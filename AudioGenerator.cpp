@@ -69,10 +69,12 @@ int AudioGenerator::audioCallback(const void*,
 
 
     osc1.setWaveform(static_cast<Oscillator::Waveform>(params.osc1Waveform));
-    osc2.setWaveform(static_cast<Oscillator::Waveform>(params.osc1Waveform)); // (Tu peux différencier si tu veux)
-
     osc1.setFrequency(noteFreq);
+    osc1.setSampleRate(SAMPLE_RATE);
+
+    osc2.setWaveform(static_cast<Oscillator::Waveform>(params.osc1Waveform)); // (Tu peux différencier si tu veux)
     osc2.setFrequency(noteFreq);
+    osc2.setSampleRate(SAMPLE_RATE);
 
     envelope.setAttackTime(params.attack);
     envelope.setReleaseTime(params.release);

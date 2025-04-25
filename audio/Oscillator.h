@@ -16,6 +16,7 @@ class Oscillator {
     void setFrequency(double hz);
     void setWaveform(Waveform waveform);
     void setFrequencyOffset(double offset);
+    void setSampleRate(double newSampleRate);
     void generate(float* buffer,int frames);
 
     // ici c'est les methode pour l'envelope

@@ -30,7 +30,6 @@ private:
 
     double attackIncrement;
     double releaseIncrement;
-
     void updateIncrements();
 
 };

@@ -1,23 +1,20 @@
 
 #ifndef TESTINSTRUCT_MAINWINDOW_H
 #define TESTINSTRUCT_MAINWINDOW_H
-
+#include "AudioParam.h"
 #include <SDL3/SDL.h>
-
-#include "AudioParams.h"
-
 class MainWindow {
-public :
+public:
+    MainWindow(LockedPOD& params);
     void init();
     void run();
-  AudioParams& getUiState();
-    void draw();
-    bool pollEvents();           // ← Gère les événements SDL (retourne true si on continue)
-    void renderFrame();
 private:
+    void draw();
+
     SDL_Window* window { nullptr };
     SDL_Renderer* renderer { nullptr };
-    AudioParams uiState;
+
+    LockedPOD& params;
 };
 
 #endif //TESTINSTRUCT_MAINWINDOW_H

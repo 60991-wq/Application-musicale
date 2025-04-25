@@ -22,19 +22,22 @@ void MainWindow::run() {
         SDL_Event event;
         while (SDL_PollEvent(&event)){
             ImGui_ImplSDL3_ProcessEvent(&event);
-            if (event.type == SDL_EVENT_QUIT)
+            if (SDL_EVENT_QUIT == event.type)
                 done = true;
-            if ((event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
+            if ((SDL_EVENT_WINDOW_CLOSE_REQUESTED == event.type)
                 && (SDL_GetWindowID(window) == event.window.windowID))
                 done = true;
         }
 
+        // Start the Dear ImGui frame
         ImGui_ImplSDLRenderer3_NewFrame();
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
+        // all the UI code description
         draw();
 
+        // Rendering
         ImGui::Render();
         SDL_SetRenderDrawColorFloat(renderer,
                                     clear_color.x, clear_color.y, clear_color.z, clear_color.w);
@@ -42,6 +45,7 @@ void MainWindow::run() {
         ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
         SDL_RenderPresent(renderer);
 
+        // Calculate time spent and sleep if needed
         auto frameEnd = std::chrono::high_resolution_clock::now();
         auto frameDuration = frameEnd - frameStart;
         if (frameDuration < TARGET_FRAMETIME) {
@@ -49,35 +53,14 @@ void MainWindow::run() {
         }
     }
 
-    // Cleanup (exactement comme avant)
-}
-bool MainWindow::pollEvents() {
-    SDL_Event event;
-    while (SDL_PollEvent(&event)) {
-        ImGui_ImplSDL3_ProcessEvent(&event);
-        if (event.type == SDL_EVENT_QUIT) return false;
-        if (event.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED &&
-            SDL_GetWindowID(window) == event.window.windowID)
-            return false;
-    }
-    return true;
-}
+    // Cleanup
+    ImGui_ImplSDLRenderer3_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
+    ImGui::DestroyContext();
 
-void MainWindow::renderFrame() {
-    const auto clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
-    ImGui_ImplSDLRenderer3_NewFrame();
-    ImGui_ImplSDL3_NewFrame();
-    ImGui::NewFrame();
-
-    draw();
-
-    ImGui::Render();
-    SDL_SetRenderDrawColorFloat(renderer,
-        clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-    SDL_RenderClear(renderer);
-    ImGui_ImplSDLRenderer3_RenderDrawData(ImGui::GetDrawData(), renderer);
-    SDL_RenderPresent(renderer);
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
 }
 
 
@@ -121,6 +104,3 @@ void MainWindow::draw() {
     ImGui::End();
 }
 
-AudioParams& MainWindow::getUiState() {
-    return uiState;
-}
