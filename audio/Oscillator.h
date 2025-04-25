@@ -21,24 +21,21 @@ class Oscillator {
     // ici c'est les methode pour l'envelope
     void noteOn();
     void noteOff();
-    void setEnvelopeParams(double attack, double decay, double sustain, double release);
-
+    void setEnvelopeParams(double attack,  double release);
     void setCutoff(double cutoffHz);
 
 private:
     Envelope envelope;
+    Filter filter;
+
     double phase;
     double phaseStep;
     double frequency;
     double sampleRate;
     double frequencyOffset;
     Waveform waveform;
-    Filter filter;
-
 
     void updatePhaseStep();
-
-
 
 };
 

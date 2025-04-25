@@ -1,43 +1,45 @@
-#include <iostream>
 #include "MainWindow.h"
 #include "AudioGenerator.h"
 #include "audio/Oscillator.h"
-#include <thread>
-#include <chrono>
-#include "util/Constants.h"
+#include "audio/Envelope.h"
+#include "audio/Filter.h"
 #include "audio/Delay.h"
+#include "util/Constants.h"
+#include <chrono>
+#include <thread>
+
+constexpr float FRAMERATE = 60.0f;
+constexpr std::chrono::duration<double, std::milli> FRAME_DURATION(1000.0 / FRAMERATE);
 
 int main() {
     Oscillator osc1(SAMPLE_RATE);
     Oscillator osc2(SAMPLE_RATE);
-
-    osc1.setWaveform(Oscillator::Waveform::SINE);
-    osc1.setFrequency(440.0);
-    osc1.setEnvelopeParams(0.5, 0.3, 0.6, 1.0);
-    osc1.setCutoff(800.0);
-
-    osc2.setWaveform(Oscillator::Waveform::SQUARE);
-    osc2.setFrequency(220.0);
-    osc2.setEnvelopeParams(0.4, 0.2, 0.7, 1.2);
-    osc2.setCutoff(600.0);
-
+    Envelope envelope(SAMPLE_RATE);
+    Filter filter(SAMPLE_RATE);
     Delay delay(SAMPLE_RATE);
-    delay.setDelayTime(0.5);
-    delay.setMix(0.4f);
 
-    AudioGenerator generator;
-    generator.init(&osc1, &delay); // Par défaut, on écoute osc1. (On pourra mixer ensuite)
-
-    osc1.noteOn();
-
+    AudioGenerator audioGen;
+    audioGen.init(&osc1, &osc2, &envelope, &filter, &delay);
 
     MainWindow window;
-    window.oscillator1 = &osc1;
-    window.oscillator2 = &osc2;
-    window.delay = &delay;
-
     window.init();
-    window.run();
+
+    while (true) {
+        auto frameStart = std::chrono::high_resolution_clock::now();
+
+        if (!window.pollEvents())
+            break;
+
+        // 🔥 C’est ici qu’on connecte l’audio à l’UI
+        audioGen.updateFromUi(window.getUiState());
+
+        window.renderFrame();
+
+        auto frameEnd = std::chrono::high_resolution_clock::now();
+        auto frameTime = frameEnd - frameStart;
+        if (frameTime < FRAME_DURATION)
+            std::this_thread::sleep_for(FRAME_DURATION - frameTime);
+    }
 
     return 0;
 }

@@ -42,7 +42,7 @@ void Envelope::update() {
         case State::ATTACK:
             envelopeValue += attackIncrement;
             if (envelopeValue >= 1.0) {
-                envelopeValue -= 1.0;
+                envelopeValue = 1.0;
                 state = State::SUSTAIN;
             }
             break;

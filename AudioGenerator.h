@@ -3,24 +3,28 @@
 
 #include "portaudio.h"
 #include "audio/Oscillator.h"
-#include "audio/Delay.h"
+#include "audio/Envelope.h"
+#include "AudioParam.h"
+
+struct AudioCallbackData {
+    LockedPOD* lockedParams = nullptr;
+};
 
 class AudioGenerator {
 public:
-    void init(Oscillator* oscillator,Delay* delay);
-    Oscillator* oscillator = nullptr;
-    Delay* delay = nullptr;
+    explicit AudioGenerator(LockedPOD& sharedParams);
+
+    void init(); // Lance PortAudio avec notre lockedParams
 
 private:
-    static int audioCallback( const void *inputBuffer, void *outputBuffer,
-                              unsigned long framesPerBuffer,
-                              const PaStreamCallbackTimeInfo* timeInfo,
-                              PaStreamCallbackFlags statusFlags,
-                              void *userData );
+    AudioCallbackData callbackData;
+    PaStream* stream = nullptr;
 
-    double currentTimeInSeconds {0.0};
-
+    static int audioCallback(const void* inputBuffer, void* outputBuffer,
+                             unsigned long framesPerBuffer,
+                             const PaStreamCallbackTimeInfo* timeInfo,
+                             PaStreamCallbackFlags statusFlags,
+                             void* userData);
 };
 
-
-#endif //SIMPLE_SYNTH_AUDIOGENERATOR_H
+#endif // SIMPLE_SYNTH_AUDIOGENERATOR_H

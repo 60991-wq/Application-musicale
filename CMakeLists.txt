@@ -28,6 +28,8 @@ add_executable(60991 main.cpp MainWindow.cpp AudioGenerator.cpp
         audio/Delay.cpp
         audio/Delay.h
         util/Constants.h
+        AudioParam.h
+        AudioParam.cpp
 )
 if (APPLE)
     set(CMAKE_INSTALL_RPATH
