@@ -5,10 +5,11 @@
 #include <algorithm>
 #include <cmath>
 
-
-
 AudioGenerator::AudioGenerator(LockedPOD& sharedParams)
-    : callbackData{&sharedParams}
+    : callbackData{&sharedParams},
+      osc1(SAMPLE_RATE),
+      osc2(SAMPLE_RATE),
+      filter(SAMPLE_RATE)
 {}
 
 void AudioGenerator::init() {
@@ -23,7 +24,7 @@ void AudioGenerator::init() {
                                 SAMPLE_RATE,
                                 FRAMES_PER_BUFFER,
                                 audioCallback,
-                                &callbackData);
+                                this);
     if (err != paNoError) {
         std::cerr << "Failed to open PortAudio stream: " << Pa_GetErrorText(err) << std::endl;
         return;
@@ -41,8 +42,9 @@ int AudioGenerator::audioCallback(const void*,
                                   const PaStreamCallbackTimeInfo*,
                                   PaStreamCallbackFlags,
                                   void* userData) {
+    auto* generator = static_cast<AudioGenerator*>(userData);
+    auto* callbackData = &generator->callbackData;
 
-    auto* callbackData = static_cast<AudioCallbackData*>(userData);
     if (!callbackData || !callbackData->lockedParams) {
         return paContinue;
     }
@@ -50,59 +52,53 @@ int AudioGenerator::audioCallback(const void*,
     POD params = callbackData->lockedParams->getCopy();
     float* out = reinterpret_cast<float*>(outputBuffer);
 
-    static Oscillator osc1(SAMPLE_RATE);
-    static Oscillator osc2(SAMPLE_RATE);
-    static Envelope envelope(SAMPLE_RATE);
-    static bool noteWasPressed = false;
-
+    // Gérer les notes (noteOn/noteOff)
     bool noteNowPressed = (params.activeNote != -1);
-    if (noteNowPressed && !noteWasPressed) {
-        envelope.noteOn();
-    } else if (!noteNowPressed && noteWasPressed) {
-        envelope.noteOff();
+    if (noteNowPressed && !generator->noteWasPressed) {
+        generator->osc1.noteOn();
+        generator->osc2.noteOn();
+    } else if (!noteNowPressed && generator->noteWasPressed) {
+        generator->osc1.noteOff();
+        generator->osc2.noteOff();
     }
-    noteWasPressed = noteNowPressed;
+    generator->noteWasPressed = noteNowPressed;
 
     // Fréquence de base C4 (Do)
     constexpr float baseFreq = 261.63f;
-    float noteFreq = baseFreq * std::pow(2.0f, params.activeNote / 12.0f);
+    float noteFreq = baseFreq;
+    if (params.activeNote >= 0) {
+        noteFreq = baseFreq * std::pow(2.0f, params.activeNote / 12.0f);
+    }
 
+    // Configurer oscillateurs
+    generator->osc1.setWaveform(static_cast<Oscillator::Waveform>(params.osc1Waveform));
+    generator->osc1.setFrequency(noteFreq + params.osc1Offset);
+    generator->osc1.setEnvelopeParams(params.attack, params.release);
 
-    osc1.setWaveform(static_cast<Oscillator::Waveform>(params.osc1Waveform));
-    osc1.setFrequency(noteFreq);
-    osc1.setSampleRate(SAMPLE_RATE);
+    generator->osc2.setWaveform(Oscillator::Waveform::SAW); // OSC2 toujours SAW
+    generator->osc2.setFrequency(noteFreq);
+    generator->osc2.setEnvelopeParams(params.attack, params.release);
 
-    osc2.setWaveform(static_cast<Oscillator::Waveform>(params.osc1Waveform)); // (Tu peux différencier si tu veux)
-    osc2.setFrequency(noteFreq);
-    osc2.setSampleRate(SAMPLE_RATE);
-
-    envelope.setAttackTime(params.attack);
-    envelope.setReleaseTime(params.release);
-
-    std::vector<float> buffer1(framesPerBuffer, 0.0f);
-    std::vector<float> buffer2(framesPerBuffer, 0.0f);
-    std::vector<float> mixedBuffer(framesPerBuffer, 0.0f);
+    // Préparer buffers
+    std::vector<float> buffer1(framesPerBuffer * 2, 0.0f);
+    std::vector<float> buffer2(framesPerBuffer * 2, 0.0f);
 
     if (params.osc1Active) {
-        osc1.generate(buffer1.data(), static_cast<int>(framesPerBuffer));
+        generator->osc1.generate(buffer1.data(), static_cast<int>(framesPerBuffer));
     }
-
     if (params.osc2Active) {
-        osc2.generate(buffer2.data(), static_cast<int>(framesPerBuffer));
+        generator->osc2.generate(buffer2.data(), static_cast<int>(framesPerBuffer));
     }
 
-    for (unsigned long i = 0; i < framesPerBuffer; ++i) {
-        mixedBuffer[i] = 0.5f * (buffer1[i] + buffer2[i]);
+    // Mix osc1 + osc2
+    for (unsigned long i = 0; i < framesPerBuffer * 2; ++i) {
+        out[i] = 0.5f * (buffer1[i] + buffer2[i]);
     }
 
-    for (unsigned long i = 0; i < framesPerBuffer; ++i) {
-        envelope.update();
-        mixedBuffer[i] *= static_cast<float>(envelope.getValue());
-    }
-
-    for (unsigned long i = 0; i < framesPerBuffer; ++i) {
-        out[2 * i]     = mixedBuffer[i];
-        out[2 * i + 1] = mixedBuffer[i];
+    // Appliquer le filtre
+    generator->filter.setCutoff(params.cutoff);
+    for (unsigned long i = 0; i < framesPerBuffer * 2; ++i) {
+        out[i] = generator->filter.process(out[i]);
     }
 
     return paContinue;

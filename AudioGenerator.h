@@ -1,30 +1,33 @@
-#ifndef SIMPLE_SYNTH_AUDIOGENERATOR_H
-#define SIMPLE_SYNTH_AUDIOGENERATOR_H
+#ifndef AUDIOGENERATOR_H
+#define AUDIOGENERATOR_H
 
 #include "portaudio.h"
 #include "audio/Oscillator.h"
-#include "audio/Envelope.h"
+#include "audio/Filter.h"
 #include "AudioParam.h"
 
 struct AudioCallbackData {
-    LockedPOD* lockedParams = nullptr;
+    LockedPOD* lockedParams;
 };
 
 class AudioGenerator {
 public:
     explicit AudioGenerator(LockedPOD& sharedParams);
-
-    void init(); // Lance PortAudio avec notre lockedParams
+    void init();
 
 private:
-    AudioCallbackData callbackData;
-    PaStream* stream = nullptr;
-
-    static int audioCallback(const void* inputBuffer, void* outputBuffer,
+    static int audioCallback(const void*, void* outputBuffer,
                              unsigned long framesPerBuffer,
-                             const PaStreamCallbackTimeInfo* timeInfo,
-                             PaStreamCallbackFlags statusFlags,
+                             const PaStreamCallbackTimeInfo*, PaStreamCallbackFlags,
                              void* userData);
+
+    PaStream* stream {nullptr};
+    AudioCallbackData callbackData;
+
+    Oscillator osc1;
+    Oscillator osc2;
+    Filter filter;
+    bool noteWasPressed { false };
 };
 
-#endif // SIMPLE_SYNTH_AUDIOGENERATOR_H
+#endif // AUDIOGENERATOR_H

@@ -12,7 +12,8 @@ Envelope::Envelope(double sampleRate)
   releaseTime(0.5),
   attackIncrement(0.0),
   releaseIncrement(0.0),
-  state(State::IDLE) {
+  state(State::IDLE)
+{
     updateIncrements();
 }
 
@@ -31,7 +32,9 @@ void Envelope::noteOn() {
 }
 
 void Envelope::noteOff() {
-    state = RELEASE;
+    if (state == State::SUSTAIN || state == State::ATTACK) {
+        state = State::RELEASE;
+    }
 }
 
 double Envelope::getValue() const {

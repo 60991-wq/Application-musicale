@@ -55,7 +55,6 @@ void Oscillator::setSampleRate(double newSampleRate) {
     sampleRate = newSampleRate;
     updatePhaseStep();
 }
-
 void Oscillator::generate(float* buffer, int frames) {
     for (int i = 0; i < frames; ++i) {
         float sample = 0.0f;

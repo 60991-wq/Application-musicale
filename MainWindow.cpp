@@ -8,8 +8,47 @@
 constexpr float FRAMERATE = 60.0f;
 constexpr std::chrono::duration<double, std::milli> TARGET_FRAMETIME(1000.0 / FRAMERATE);
 
+MainWindow::MainWindow(LockedPOD& params)
+    : params(params) // Initialisation du LockedPOD
+{}
 void MainWindow::init() {
-    // (Setup SDL + ImGui exactement comme avant)
+
+    // Setup SDL
+    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) {
+        SDL_Log("Error: SDL_Init(): %s\n", SDL_GetError());
+        return;
+    }
+    // Create window with SDL_Renderer graphics context
+    Uint32 window_flags = SDL_WINDOW_HIDDEN;
+    window = SDL_CreateWindow("", 800, 600, window_flags);
+    if (nullptr == window) {
+        SDL_Log("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
+        return;
+    }
+    renderer = SDL_CreateRenderer(window, nullptr);
+    SDL_SetRenderVSync(renderer, 1);
+    if (nullptr == renderer) {
+        SDL_Log("Error: SDL_CreateRenderer(): %s\n", SDL_GetError());
+        return;
+    }
+    SDL_SetWindowPosition(
+            window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+    SDL_ShowWindow(window);
+
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+
+    // Setup DearImGui style
+    ImGui::StyleColorsDark();
+    ImGui::GetStyle().WindowRounding = 0.0f;
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
+    ImGui_ImplSDLRenderer3_Init(renderer);
 }
 
 void MainWindow::run() {
@@ -62,45 +101,57 @@ void MainWindow::run() {
     SDL_DestroyWindow(window);
     SDL_Quit();
 }
-
-
 void MainWindow::draw() {
-
     ImGui::Begin("Synthétiseur");
+
+    POD currentState = params.getCopy();
 
     const char* waveforms[] = { "SINE", "SQUARE", "SAW" };
 
-    ImGui::Checkbox("OSC 1", &uiState.osc1Active);
-    ImGui::Combo("##Waveform1", &uiState.osc1Waveform, waveforms, IM_ARRAYSIZE(waveforms));
+    ImGui::Checkbox("OSC 1", &currentState.osc1Active);
+    ImGui::Combo("##Waveform1", &currentState.osc1Waveform, waveforms, IM_ARRAYSIZE(waveforms));
     ImGui::SameLine(); ImGui::Text("OSC1 Waveform");
 
-    ImGui::SliderFloat("##Offset1", &uiState.osc1Offset, -5.0f, 5.0f, "%.3f");
+    ImGui::SliderFloat("##Offset1", &currentState.osc1Offset, -5.0f, 5.0f, "%.3f");
     ImGui::SameLine(); ImGui::Text("OSC1 Frequency Offset");
 
-    ImGui::Checkbox("OSC 2", &uiState.osc2Active);
+    ImGui::Checkbox("OSC 2", &currentState.osc2Active);
     ImGui::Text("OSC2 Waveform: SAW (non modifiable)");
 
-    ImGui::SliderFloat("Attack", &uiState.attack, 0.0f, 1.0f);
-    ImGui::SliderFloat("Release", &uiState.release, 0.0f, 2.0f);
-    ImGui::SliderFloat("Cutoff", &uiState.cutoff, 20.0f, 20000.0f);
-    ImGui::SliderFloat("Resonance", &uiState.resonance, 0.0f, 5.0f);
+    ImGui::SliderFloat("Attack", &currentState.attack, 0.0f, 1.0f);
+    ImGui::SliderFloat("Release", &currentState.release, 0.0f, 2.0f);
+    ImGui::SliderFloat("Cutoff", &currentState.cutoff, 20.0f, 20000.0f);
+    ImGui::SliderFloat("Resonance", &currentState.resonance, 0.0f, 5.0f);
 
-    ImGui::SliderFloat("Delay Time", &uiState.delayTime, 0.1f, 2.0f);
-    ImGui::SliderFloat("Delay Mix", &uiState.delayMix, 0.0f, 1.0f);
+    ImGui::SliderFloat("Delay Time", &currentState.delayTime, 0.1f, 2.0f);
+    ImGui::SliderFloat("Delay Mix", &currentState.delayMix, 0.0f, 1.0f);
 
     ImGui::Separator();
     ImGui::Text("Clavier virtuel");
 
+    static bool anyKeyPressed = false;
+    bool keyPressedThisFrame = false;
+
     for (int i = 0; i < 13; ++i) {
         char label[4];
         sprintf(label, "%d", i + 1);
+
         if (ImGui::Button(label, ImVec2(36, 36))) {
-            uiState.activeNote = i;
-            uiState.noteTriggered = true;
+            currentState.activeNote = i;
+            keyPressedThisFrame = true;
         }
+
         if (i < 12) ImGui::SameLine();
     }
 
-    ImGui::End();
-}
+    // --> Détecter s'il n'y a aucun bouton cliqué
+    if (!keyPressedThisFrame && anyKeyPressed) {
+        currentState.activeNote = -1;
+    }
 
+    anyKeyPressed = keyPressedThisFrame;
+
+    ImGui::End();
+
+    params.setCopy(currentState);
+}
