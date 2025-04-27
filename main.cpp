@@ -11,6 +11,7 @@ int main() {
     MainWindow mainWindow(sharedParams);
     mainWindow.init();
     mainWindow.run();
+    audioGenerator.cleanup();
 
     return 0;
 }

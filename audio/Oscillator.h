@@ -1,43 +1,39 @@
-//
-// Created by anini on 03-04-25.
-//
+#pragma once
 #include "Envelope.h"
 #include "Filter.h"
-#ifndef OSCILLATOR_H
-#define OSCILLATOR_H
-
-
 
 class Oscillator {
-    public:
-    enum class Waveform {SINE, SQUARE, SAW}; // je rajoute classe pour eviter les conversion
-     explicit Oscillator(double sampleRate);
+public:
+    enum class Waveform {
+        SINE,
+        SQUARE,
+        SAW
+    };
 
+    explicit Oscillator(double sampleRate);
+    
     void setFrequency(double hz);
-    void setWaveform(Waveform waveform);
+    void setWaveform(Waveform wf);
     void setFrequencyOffset(double offset);
     void setSampleRate(double newSampleRate);
-    void generate(float* buffer,int frames);
-
-    // ici c'est les methode pour l'envelope
+    
     void noteOn();
     void noteOff();
-    void setEnvelopeParams(double attack,  double release);
+    void setEnvelopeParams(double attack, double release);
     void setCutoff(double cutoffHz);
+    
+    // Remplacer generate par process
+    void process(float* buffer, int frames);
 
 private:
-    Envelope envelope;
-    Filter filter;
-
+    void updatePhaseStep();
+    
+    double sampleRate;
+    double frequency;
+    double frequencyOffset;
     double phase;
     double phaseStep;
-    double frequency;
-    double sampleRate;
-    double frequencyOffset;
     Waveform waveform;
-
-    void updatePhaseStep();
-
+    
+    Filter filter;
 };
-
-#endif //OSCILLATOR_H

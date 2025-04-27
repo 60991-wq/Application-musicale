@@ -1,11 +1,5 @@
-//
-// Created by anini on 03-04-25.
-//
-
 #ifndef ENVELOPE_H
 #define ENVELOPE_H
-
-
 
 class Envelope {
 public:
@@ -17,11 +11,12 @@ public:
     void setAttackTime(double seconds);
     void setReleaseTime(double seconds);
 
-    double getValue() const;// le volume est entre 0.0 et 1.0
+    double getValue() const; // le volume est entre 0.0 et 1.0
     void update();
+    void process(float* buffer, int frames);
 
 private:
-    enum  State {IDLE, ATTACK, SUSTAIN,  RELEASE} state;
+    enum State {IDLE, ATTACK, SUSTAIN, RELEASE} state;
     double sampleRate;
     double envelopeValue;
 
@@ -31,7 +26,6 @@ private:
     double attackIncrement;
     double releaseIncrement;
     void updateIncrements();
-
 };
 
 #endif //ENVELOPE_H

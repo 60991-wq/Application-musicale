@@ -3,20 +3,22 @@
 
 class Filter {
 public:
-    explicit Filter(double sampleRate = 44100.0);
+    explicit Filter(double sampleRate);
 
     void setCutoff(double cutoffHz);
+    void setResonance(double res);
     void reset();
 
     float process(float input);
 
 private:
+    void updateAlpha();
+
     double sampleRate;
     double cutoff;
-    double alpha;
+    double resonance {0.0};
     float lastOutput;
-
-    void updateAlpha();
+    float alpha;
 };
 
 #endif // FILTER_H
