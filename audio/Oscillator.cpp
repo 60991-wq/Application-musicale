@@ -5,55 +5,41 @@
 
 Oscillator::Oscillator(double sampleRate, float noteFreq)
     : sampleRate(sampleRate),
-      frequency(440.0),
-      frequencyOffset(0.0),
+      frequency(noteFreq),
       phase(0.0),
-      waveform(Waveform::SINE),
-      filter(sampleRate)
-{
-    updatePhaseStep();
+      waveform(Waveform::SINE) {
 }
-
 void Oscillator::setFrequency(double hz) {
     frequency = hz;
-    updatePhaseStep();
 }
 
 void Oscillator::setWaveform(Waveform wf) {
     waveform = wf;
 }
 
-void Oscillator::setFrequencyOffset(double offset) {
-    frequencyOffset = offset;
-    updatePhaseStep();
-}
 
-void Oscillator::updatePhaseStep() {
-    double effectiveFreq = frequency + frequencyOffset;
-    phaseStep = TWO_PI * effectiveFreq / sampleRate;
-}
 
 void Oscillator::process(float* buffer, int frames) {
+    // Calculer le pas de phase
+    double phaseStep = TWO_PI * frequency / sampleRate;
+
     for (int i = 0; i < frames; ++i) {
         float sample = 0.0f;
 
-        // Générer la forme d'onde
         switch (waveform) {
             case Waveform::SINE:
-                sample = 0.5f * std::sin(phase);
+                sample = std::sin(phase);
             break;
             case Waveform::SQUARE:
-                sample = (std::sin(phase) >= 0.0) ? 0.5f : -0.5f;
+                sample = (phase < M_PI) ? 1.0f : -1.0f;
             break;
             case Waveform::SAW:
-                sample = static_cast<float>((1.0 - (phase / TWO_PI)) * 2.0 - 1.0) * 0.5f;
+                sample = 2.0f * (phase / TWO_PI) - 1.0f;
             break;
         }
 
-        // Appliquer filtre simple
-        sample = filter.process(sample);
-
-        buffer[i] = sample;
+        buffer[2 * i] = sample * 0.5f;
+        buffer[2 * i + 1] = sample * 0.5f;
 
         phase += phaseStep;
         if (phase >= TWO_PI)

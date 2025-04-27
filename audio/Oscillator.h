@@ -3,7 +3,7 @@
 #include "Filter.h"
 
 class Oscillator {
-public:
+public: // tout les forme d'onde que je dois avoir
     enum class Waveform {
         SINE,
         SQUARE,
@@ -14,26 +14,14 @@ public:
     
     void setFrequency(double hz);
     void setWaveform(Waveform wf);
-    void setFrequencyOffset(double offset);
-    void setSampleRate(double newSampleRate);
-    
-    void noteOn();
-    void noteOff();
-    void setEnvelopeParams(double attack, double release);
-    void setCutoff(double cutoffHz);
-    
-    // Remplacer generate par process
+    void setSampleRate(double rate);
+
     void process(float* buffer, int frames);
 
+
 private:
-    void updatePhaseStep();
-    
     double sampleRate;
     double frequency;
-    double frequencyOffset;
     double phase;
-    double phaseStep;
     Waveform waveform;
-    
-    Filter filter;
 };
