@@ -3,7 +3,7 @@
 #include <iostream>
 #include "../util/Constants.h" // Pour SAMPLE_RATE et TWO_PI
 
-Oscillator::Oscillator(double sampleRate)
+Oscillator::Oscillator(double sampleRate, float noteFreq)
     : sampleRate(sampleRate),
       frequency(440.0),
       frequencyOffset(0.0),

@@ -7,9 +7,11 @@
 
 constexpr int CALLBACK_LOG_INTERVAL = 100;
 
+
 AudioGenerator::AudioGenerator(LockedPOD& sharedParams)
+
     : callbackData{&sharedParams},
-      osc1(SAMPLE_RATE),
+      osc1(SAMPLE_RATE, sharedParams),
       osc2(SAMPLE_RATE),
       envelope(SAMPLE_RATE),
       filter(SAMPLE_RATE)
@@ -57,29 +59,26 @@ void AudioGenerator::cleanup() {
                                   const PaStreamCallbackTimeInfo*,
                                   PaStreamCallbackFlags,
                                   void* userData) {
-    static int callCount = 0;
-    if (callCount++ % CALLBACK_LOG_INTERVAL == 0) {
-        std::cout << "Appel audioCallback (" << callCount << ")" << std::endl;
-    }
+
 
     auto* generator = static_cast<AudioGenerator*>(userData);
     auto* callbackData = &generator->callbackData;
 
-    if (!callbackData || !callbackData->lockedParams) {
-        std::cerr << "Callback invalide" << std::endl;
-        return paAbort;
-    }
+
+
 
     POD params = callbackData->lockedParams->getCopy();
     float* out = reinterpret_cast<float*>(outputBuffer);
+    constexpr float A4_FREQ = 261.63f;
+    constexpr int A4_MIDI_NOTE = 69;
+    float noteFreq = A4_FREQ * std::pow(2.0f, (params.activeNote - A4_MIDI_NOTE) / 12.0f);
 
     bool noteNowPressed = (params.activeNote != -1);
 
     if (noteNowPressed && !generator->noteWasPressed) {
-        std::cout << "Note ON: " << params.activeNote << std::endl;
         generator->envelope.noteOn();
+
     } else if (!noteNowPressed && generator->noteWasPressed) {
-        std::cout << "Note OFF" << std::endl;
         generator->envelope.noteOff();
     }
     generator->noteWasPressed = noteNowPressed;
@@ -97,9 +96,7 @@ void AudioGenerator::cleanup() {
         return paContinue;
     }
 
-    constexpr float A4_FREQ = 440.0f;
-    constexpr int A4_MIDI_NOTE = 69;
-    float noteFreq = A4_FREQ * std::pow(2.0f, (params.activeNote - A4_MIDI_NOTE) / 12.0f);
+
 
     generator->osc1.setWaveform(static_cast<Oscillator::Waveform>(params.osc1Waveform));
     generator->osc1.setFrequency(noteFreq + params.osc1Offset);
@@ -109,9 +106,9 @@ void AudioGenerator::cleanup() {
     generator->envelope.setAttackTime(params.attack);
     generator->envelope.setReleaseTime(params.release);
 
-    std::vector<float> buffer1(framesPerBuffer, 0.0f); // mono
-    std::vector<float> buffer2(framesPerBuffer, 0.0f); // mono
-    std::vector<float> mixedBuffer(framesPerBuffer, 0.0f); // mono
+    std::vector<float> buffer1(framesPerBuffer * 2 , 0.0f); // mono
+    std::vector<float> buffer2(framesPerBuffer * 2, 0.0f); // mono
+    std::vector<float> mixedBuffer(framesPerBuffer * 2, 0.0f); // mono
 
     if (params.osc1Active) {
         generator->osc1.process(buffer1.data(), static_cast<int>(framesPerBuffer));

@@ -10,7 +10,7 @@ public:
         SAW
     };
 
-    explicit Oscillator(double sampleRate);
+    explicit Oscillator(double sampleRate, float noteFreq);
     
     void setFrequency(double hz);
     void setWaveform(Waveform wf);

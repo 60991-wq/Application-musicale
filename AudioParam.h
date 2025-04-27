@@ -8,28 +8,33 @@
 #include <mutex>
 
 struct POD {
+    // tout ce qui est de ocillator 1
     bool osc1Active = true;
-    bool osc2Active = false;
-
     int osc1Waveform = 0; // 0 = SINE, 1 = SQUARE, 2 = SAW
-    float osc1Offset = 0.0f;
+    float osc1phase = 0.0f;
+    float osc1OFrequencyOffset = 0.0f;
 
-    float attack = 0.1f;
-    float release = 0.1f;
+// tout ce qui concerne oscillator 2
+    bool osc2Active = true;
+    int osc2Waveform = 2;
+    float osc2phase = 0.0f;
 
-    float cutoff = 800.0f;
-    float resonance = 0.0f;
+    // les attribut de l'envelope
+    float attack = 0.0;
+    float release = 0.0f;
 
-    float delayTime = 0.3f;
-    float delayMix = 0.2f;
+    // les attribut de filter
+    float cutoff = 15000.0f;
+    float resonance = 0.4f;
+    float delayTime = 0.0f;
+    float delayMix = 0.0f;
 
-    int activeNote = -1; // -1 = aucune note jouée
+    bool activeNote = false; // -1 = aucune note jouée
 };
 
 class LockedPOD {
 public:
     LockedPOD() = default;
-
     POD getCopy() const;
     void setCopy(const POD& newData);
 

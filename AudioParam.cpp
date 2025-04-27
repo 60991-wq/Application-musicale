@@ -5,14 +5,12 @@
 #include "AudioParam.h"
 #include <mutex>
 
-using Lock = std::lock_guard<std::mutex>;
 
 POD LockedPOD::getCopy() const {
-    Lock lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
     return data;
 }
-
 void LockedPOD::setCopy(const POD& newData) {
-    Lock lock(mutex);
+    std::lock_guard<std::mutex> lock(mutex);
     data = newData;
 }
