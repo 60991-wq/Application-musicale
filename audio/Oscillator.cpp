@@ -16,12 +16,14 @@ void Oscillator::setFrequency(double hz) {
 void Oscillator::setWaveform(Waveform wf) {
     waveform = wf;
 }
-
+void Oscillator::resetPhase() {
+    phase = 0.0;
+}
 
 
 void Oscillator::process(float* buffer, int frames) {
     // Calculer le pas de phase
-    double phaseStep = TWO_PI * frequency / sampleRate;
+    double phaseStep = Constants::TwoPi * frequency / sampleRate;
 
     for (int i = 0; i < frames; ++i) {
         float sample = 0.0f;
@@ -34,7 +36,7 @@ void Oscillator::process(float* buffer, int frames) {
                 sample = (phase < M_PI) ? 1.0f : -1.0f;
             break;
             case Waveform::SAW:
-                sample = 2.0f * (phase / TWO_PI) - 1.0f;
+                sample = 2.0f * (phase / Constants::TwoPi) - 1.0f;
             break;
         }
 
@@ -42,7 +44,7 @@ void Oscillator::process(float* buffer, int frames) {
         buffer[2 * i + 1] = sample * 0.5f;
 
         phase += phaseStep;
-        if (phase >= TWO_PI)
-            phase -= TWO_PI;
+        if (phase >= Constants::TwoPi)
+            phase -= Constants::TwoPi;
     }
 }

@@ -42,14 +42,14 @@ void Envelope::enterState(State newState) {
     switch (currentState) {
         case State::ATTACK:
             samplesInCurrentStage = static_cast<int>(attackTime * sampleRate);
-            break;
-            case State:: RELEASE:
+        break;
+        case State::RELEASE:
             samplesInCurrentStage = static_cast<int>(releaseTime * sampleRate);
-            break;
+        break;
         case State::SUSTAIN:
         case State::IDLE:
             samplesInCurrentStage = 0;
-            break;
+        break;
     }
 }
 
@@ -91,6 +91,6 @@ void Envelope::process(float* buffer, int frames) {
 
         // Clamp pour éviter les dépassement
         envelopeValue = std::clamp(envelopeValue, 0.0, 1.0);
-        buffer[i] *= static_cast<float>(envelopeValue);
-    }
+        buffer[2 * i] *= static_cast<float>(envelopeValue);
+        buffer[2 * i + 1] *= static_cast<float>(envelopeValue);    }
 }

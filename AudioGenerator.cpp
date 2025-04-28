@@ -1,132 +1,114 @@
 #include "AudioGenerator.h"
 #include "util/Constants.h"
 #include <iostream>
-#include <vector>
 #include <algorithm>
 #include <cmath>
 
-constexpr int CALLBACK_LOG_INTERVAL = 100;
-
-
-AudioGenerator::AudioGenerator(LockedPOD& sharedParams)
-
-    : callbackData{&sharedParams},
-      osc1(SAMPLE_RATE, sharedParams),
-      osc2(SAMPLE_RATE),
-      envelope(SAMPLE_RATE),
-      filter(SAMPLE_RATE)
-{}
-
-void AudioGenerator::init() {
-    PaError err = Pa_Initialize();
-    if (err != paNoError) {
-        std::cerr << "Échec de l'initialisation PortAudio : " << Pa_GetErrorText(err) << std::endl;
-        return;
-    }
-    std::cout << "PortAudio initialisé avec succès" << std::endl;
-
-    err = Pa_OpenDefaultStream(&stream,
-                               0, 2, paFloat32,
-                               SAMPLE_RATE,
-                               FRAMES_PER_BUFFER,
-                               audioCallback,
-                               this);
-    if (err != paNoError) {
-        std::cerr << "Erreur ouverture flux PortAudio : " << Pa_GetErrorText(err) << std::endl;
-        return;
-    }
-    std::cout << "Flux PortAudio ouvert avec succès" << std::endl;
-
-    err = Pa_StartStream(stream);
-    if (err != paNoError) {
-        std::cerr << "Erreur démarrage flux PortAudio : " << Pa_GetErrorText(err) << std::endl;
-        return;
-    }
-    std::cout << "Flux PortAudio démarré avec succès" << std::endl;
+// Constructeur : initialise les références et les modules audio
+AudioGenerator::AudioGenerator(LockedPOD &sharedParams)
+    : params(sharedParams),
+      osc1(Constants::SampleRate, 440.0f),
+      osc2(Constants::SampleRate, 440.0f),
+      envelope(Constants::SampleRate)
+{
 }
 
-void AudioGenerator::cleanup() {
-    std::cout << "Nettoyage des ressources PortAudio" << std::endl;
-    if (stream) {
-        Pa_StopStream(stream);
-        Pa_CloseStream(stream);
-        Pa_Terminate();
+// Fonction d'initialisation PortAudio
+void AudioGenerator::init() {
+    PaError errorInit = Pa_Initialize();
+    if (errorInit != paNoError) {
+        std::cerr << "PortAudio error in Pa_Initialize(): " << Pa_GetErrorText(errorInit) << std::endl;
+        return;
     }
-    std::cout << "Nettoyage terminé" << std::endl;
-}int AudioGenerator::audioCallback(const void*,
-                                  void* outputBuffer,
+
+    PaError errorStream = Pa_OpenDefaultStream(
+        &stream,
+        0, 2, paFloat32,               // 0 input, 2 outputs (stereo), format 32-bit float
+        Constants::SampleRate,
+        Constants::FramesPerBuffer,
+        &AudioGenerator::audioCallback, // Callback audio
+        this                            // Passage de l'objet AudioGenerator
+    );
+
+    if (errorStream != paNoError) {
+        std::cerr << "PortAudio error in Pa_OpenDefaultStream(): " << Pa_GetErrorText(errorStream) << std::endl;
+        return;
+    }
+
+    errorStream = Pa_StartStream(stream);
+    if (errorStream != paNoError) {
+        std::cerr << "PortAudio error in Pa_StartStream(): " << Pa_GetErrorText(errorStream) << '\n';
+    }
+}
+
+// Fonction appelée automatiquement par PortAudio pour générer le son
+int AudioGenerator::audioCallback(const void*, void* outputBuffer,
                                   unsigned long framesPerBuffer,
                                   const PaStreamCallbackTimeInfo*,
                                   PaStreamCallbackFlags,
                                   void* userData) {
-
-
     auto* generator = static_cast<AudioGenerator*>(userData);
-    auto* callbackData = &generator->callbackData;
+    float* out = static_cast<float*>(outputBuffer);
 
+    // --- Copie sécurisée de tous les paramètres actuels ---
+    POD paramsSnapshot = generator->params.getCopy();
 
+    // --- Détection de transition noteOn/noteOff ---
+    static bool previousNoteState = false;
+    bool currentNoteState = paramsSnapshot.activeNote;
 
-
-    POD params = callbackData->lockedParams->getCopy();
-    float* out = reinterpret_cast<float*>(outputBuffer);
-    constexpr float A4_FREQ = 261.63f;
-    constexpr int A4_MIDI_NOTE = 69;
-    float noteFreq = A4_FREQ * std::pow(2.0f, (params.activeNote - A4_MIDI_NOTE) / 12.0f);
-
-    bool noteNowPressed = (params.activeNote != -1);
-
-    if (noteNowPressed && !generator->noteWasPressed) {
+    if (currentNoteState && !previousNoteState) {
+        generator->osc1.resetPhase();
+        generator->osc2.resetPhase();
         generator->envelope.noteOn();
-
-    } else if (!noteNowPressed && generator->noteWasPressed) {
+    } else if (!currentNoteState && previousNoteState) {
         generator->envelope.noteOff();
     }
-    generator->noteWasPressed = noteNowPressed;
+    previousNoteState = currentNoteState;
+    // --- Fin détection notes ---
 
-    if (!noteNowPressed) {
-        static float phase = 0.0f;
-        for (unsigned long i = 0; i < framesPerBuffer; ++i) {
-            float sample = 0.3f * sinf(phase);
-            phase += 0.1f;
-            if (phase >= 2.0f * M_PI) phase -= 2.0f * M_PI;
+    // --- Configuration des oscillateurs ---
+    float baseFrequency = 261.63f; // C4 (Do central)
+    float noteFreq = baseFrequency * std::pow(2.0f, paramsSnapshot.noteIndex / 12.0f); // CORRECT : division par 12
 
-            out[2 * i] = sample;
-            out[2 * i + 1] = sample;
-        }
-        return paContinue;
-    }
-
-
-
-    generator->osc1.setWaveform(static_cast<Oscillator::Waveform>(params.osc1Waveform));
-    generator->osc1.setFrequency(noteFreq + params.osc1Offset);
-    generator->osc2.setWaveform(Oscillator::Waveform::SAW);
+    generator->osc1.setFrequency(noteFreq + paramsSnapshot.osc1OFrequencyOffset);
     generator->osc2.setFrequency(noteFreq);
 
-    generator->envelope.setAttackTime(params.attack);
-    generator->envelope.setReleaseTime(params.release);
+    generator->osc1.setWaveform(static_cast<Oscillator::Waveform>(paramsSnapshot.osc1Waveform));
+    generator->osc2.setWaveform(static_cast<Oscillator::Waveform>(paramsSnapshot.osc2Waveform));
 
-    std::vector<float> buffer1(framesPerBuffer * 2 , 0.0f); // mono
-    std::vector<float> buffer2(framesPerBuffer * 2, 0.0f); // mono
-    std::vector<float> mixedBuffer(framesPerBuffer * 2, 0.0f); // mono
+    // Pas besoin de refaire setSampleRate tout le temps (fait au constructeur)
+    // Idem pour envelope
 
-    if (params.osc1Active) {
-        generator->osc1.process(buffer1.data(), static_cast<int>(framesPerBuffer));
-    }
-    if (params.osc2Active) {
-        generator->osc2.process(buffer2.data(), static_cast<int>(framesPerBuffer));
-    }
+    generator->envelope.setParameters(paramsSnapshot.attack, paramsSnapshot.release);
 
+    // --- Génération des signaux ---
+    float bufferOsc1[2*Constants::FramesPerBuffer];
+    float bufferOsc2[2*Constants::FramesPerBuffer];
+    float mixBuffer[2*Constants::FramesPerBuffer];
+
+    if (paramsSnapshot.osc1Active)
+        generator->osc1.process(bufferOsc1, framesPerBuffer);
+    else
+        std::fill(bufferOsc1, bufferOsc1 + 2*framesPerBuffer, 0.0f);
+
+    if (paramsSnapshot.osc2Active)
+        generator->osc2.process(bufferOsc2, framesPerBuffer);
+    else
+        std::fill(bufferOsc2, bufferOsc2 + 2*framesPerBuffer, 0.0f);
+
+    // Mixage 50% osc1 + 50% osc2
     for (unsigned long i = 0; i < framesPerBuffer; ++i) {
-        mixedBuffer[i] = 0.5f * (buffer1[i] + buffer2[i]);
+        mixBuffer[2*i] = 0.5f * (bufferOsc1[2*i] + bufferOsc2[2*i]);       // Canal gauche
+        mixBuffer[2*i+1] = 0.5f * (bufferOsc1[2*i+1] + bufferOsc2[2*i+1]); // Canal droit
     }
 
-    generator->envelope.process(mixedBuffer.data(), static_cast<int>(framesPerBuffer));
+    // Application de l'enveloppe
+    generator->envelope.process(mixBuffer, framesPerBuffer);
 
-    // Copier en stéréo
-    for (unsigned long i = 0; i < framesPerBuffer; ++i) {
-        out[2 * i] = mixedBuffer[i];      // Gauche
-        out[2 * i + 1] = mixedBuffer[i];  // Droite
+    // Copie dans buffer de sortie (stéréo)
+    for (unsigned long i = 0; i < 2*framesPerBuffer; ++i) {
+        out[i] = mixBuffer[i];
     }
 
     return paContinue;

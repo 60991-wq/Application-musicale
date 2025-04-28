@@ -30,6 +30,7 @@ struct POD {
     float delayMix = 0.0f;
 
     bool activeNote = false; // -1 = aucune note jouée
+    int noteIndex = 0;
 };
 
 class LockedPOD {

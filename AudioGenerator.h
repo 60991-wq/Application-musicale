@@ -7,16 +7,11 @@
 #include "AudioParam.h"
 #include <vector>
 
-struct AudioCallbackData {
-    LockedPOD* lockedParams;
-};
 
 class AudioGenerator {
 public:
     explicit AudioGenerator(LockedPOD& sharedParams);
     void init();
-    void cleanup();  // Méthode explicite pour le nettoyage
-
 private:
     static int audioCallback(const void*, void* outputBuffer,
                              unsigned long framesPerBuffer,
@@ -24,13 +19,10 @@ private:
                              void* userData);
 
     PaStream* stream {nullptr};
-    AudioCallbackData callbackData;
-
+    LockedPOD& params;
     Oscillator osc1;
     Oscillator osc2;
-    Filter filter;
     Envelope envelope;
-    bool noteWasPressed { false };
 };
 
 #endif // AUDIOGENERATOR_H

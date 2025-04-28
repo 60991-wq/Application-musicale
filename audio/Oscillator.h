@@ -15,6 +15,7 @@ public: // tout les forme d'onde que je dois avoir
     void setFrequency(double hz);
     void setWaveform(Waveform wf);
     void setSampleRate(double rate);
+    void resetPhase();
 
     void process(float* buffer, int frames);
 
