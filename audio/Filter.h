@@ -1,24 +1,38 @@
+//
+// Created by anini on 26-04-25.
+//
+
 #ifndef FILTER_H
 #define FILTER_H
 
+#pragma once
+
+#include <cmath>
+
 class Filter {
 public:
-    explicit Filter(double sampleRate);
+    Filter();
 
-    void setCutoff(double cutoffHz);
-    void setResonance(double res);
+    void setSampleRate(float rate);
+    void setCutoff(float cutoff);
+    void setResonance(float resonance);
     void reset();
-
-    float process(float input);
+    void process(float* buffer, int framesPerBuffer);
 
 private:
-    void updateAlpha();
+    void updateCoefficients();
 
-    double sampleRate;
-    double cutoff;
-    double resonance {0.0};
-    float lastOutput;
-    float alpha;
+    float sampleRate;
+    float cutoff;
+    float resonance;
+
+    // Coefficients du filtre
+    float a0, a1, a2, b1, b2;
+    // États internes pour le canal gauche
+    float x1L, x2L, y1L, y2L;
+
+    // États internes pour le canal droit
+    float x1R, x2R, y1R, y2R;
 };
 
 #endif // FILTER_H
