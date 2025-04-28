@@ -26,13 +26,9 @@ private:
     float cutoff;
     float resonance;
 
-    // Coefficients du filtre
     float a0, a1, a2, b1, b2;
-    // États internes pour le canal gauche
     float x1L, x2L, y1L, y2L;
 
-    // États internes pour le canal droit
-    float x1R, x2R, y1R, y2R;
 };
 
 #endif // FILTER_H

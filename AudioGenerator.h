@@ -20,7 +20,6 @@ private:
 
     PaStream* stream {nullptr};
     LockedPOD& params;
-
 };
 
 #endif // AUDIOGENERATOR_H

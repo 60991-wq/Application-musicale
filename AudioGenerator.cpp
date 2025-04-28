@@ -46,13 +46,11 @@ int AudioGenerator::audioCallback(const void*, void* outputBuffer,
     // Variables statiques pour les modules audio
     static Oscillator osc1(Constants::SampleRate, 440.0f); // Avec paramètres initiaux
     static Oscillator osc2(Constants::SampleRate, 440.0f); // Avec paramètres initiaux
-    static Envelope envelope(Constants::SampleRate);       // Avec paramètre initial
-    static Filter filter;                                 // Statique aussi pour éviter recréation
+    static Envelope envelope(Constants::SampleRate);
+    static Filter filter;                                 
 
-    // --- Copie sécurisée de tous les paramètres actuels ---
     POD paramsSnapshot = generator->params.getCopy();
 
-    // --- Détection de transition noteOn/noteOff ---
     static bool previousNoteState = false;
     bool currentNoteState = paramsSnapshot.activeNote;
 
@@ -66,7 +64,6 @@ int AudioGenerator::audioCallback(const void*, void* outputBuffer,
     }
     previousNoteState = currentNoteState;
 
-    // --- Configuration des oscillateurs ---
     float baseFrequency = 261.63f; // C4 (Do central)
     float noteFreq = baseFrequency * std::pow(2.0f, paramsSnapshot.noteIndex / 12.0f);
 
@@ -75,6 +72,7 @@ int AudioGenerator::audioCallback(const void*, void* outputBuffer,
 
     osc2.setFrequency(noteFreq);
     osc2.setWaveform(static_cast<Oscillator::Waveform>(paramsSnapshot.osc2Waveform));
+
 
     envelope.setParameters(paramsSnapshot.attack, paramsSnapshot.release);
 
@@ -101,12 +99,10 @@ int AudioGenerator::audioCallback(const void*, void* outputBuffer,
     // Application de l'enveloppe
     envelope.process(mixBuffer, framesPerBuffer);
 
-    // Configuration et application du filtre
     filter.setCutoff(paramsSnapshot.cutoff);
     filter.setResonance(paramsSnapshot.resonance);
     filter.process(mixBuffer, framesPerBuffer);
 
-    // Copie dans buffer de sortie (stéréo)
     for (unsigned long i = 0; i < 2*framesPerBuffer; ++i) {
         out[i] = mixBuffer[i];
     }
