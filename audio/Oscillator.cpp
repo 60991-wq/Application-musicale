@@ -19,6 +19,9 @@ void Oscillator::setWaveform(Waveform wf) {
 void Oscillator::resetPhase() {
     phase = 0.0;
 }
+void Oscillator::setSampleRate(double rate) {
+    sampleRate = rate;
+}
 
 
 void Oscillator::process(float* buffer, int frames) {

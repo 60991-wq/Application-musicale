@@ -5,7 +5,7 @@
 #include <numbers>
 
 namespace Constants {
-    constexpr float TwoPi = std::numbers::pi_v<float> * 2.0f;
+    constexpr auto TwoPi = std::numbers::pi_v<float> * 2.0f;
     constexpr int SampleRate = 44100;
     constexpr int FramesPerBuffer = 256;
 }

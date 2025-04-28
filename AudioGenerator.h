@@ -20,9 +20,7 @@ private:
 
     PaStream* stream {nullptr};
     LockedPOD& params;
-    Oscillator osc1;
-    Oscillator osc2;
-    Envelope envelope;
+
 };
 
 #endif // AUDIOGENERATOR_H
