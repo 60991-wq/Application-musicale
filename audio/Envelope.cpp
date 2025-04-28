@@ -1,77 +1,96 @@
 #include "Envelope.h"
-#include <algorithm>
+#include <algorithm> // Pour std::clamp
 
 Envelope::Envelope(double sampleRate)
     : sampleRate(sampleRate),
+      currentState(State::IDLE),
       envelopeValue(0.0),
       attackTime(0.1),
       releaseTime(0.5),
-      attackIncrement(0.0),
-      releaseIncrement(0.0),
-      state(State::IDLE)
+      sampleCounter(0),
+      samplesInCurrentStage(0)
 {
-    updateIncrements();
 }
 
-void Envelope::setAttackTime(double seconds) {
-    attackTime = seconds;
-    updateIncrements();
+void Envelope::setSampleRate(double rate) {
+    sampleRate = rate;
 }
 
-void Envelope::setReleaseTime(double seconds) {
-    releaseTime = seconds;
-    updateIncrements();
+void Envelope::setParameters(double attackTimeSeconds, double releaseTimeSeconds) {
+    attackTime = attackTimeSeconds;
+    releaseTime = releaseTimeSeconds;
 }
 
 void Envelope::noteOn() {
-    state = ATTACK;
+    enterState(State::ATTACK);
 }
 
 void Envelope::noteOff() {
-    if (state == State::SUSTAIN || state == State::ATTACK) {
-        state = RELEASE;
+    if (currentState == State::ATTACK || currentState == State::SUSTAIN) {
+        enterState(State::RELEASE);
     }
 }
 
-double Envelope::getValue() const {
-    return envelopeValue;
+bool Envelope::isRunning() const {
+    return currentState != State::IDLE;
 }
 
-void Envelope::update() {
-    switch (state) {
-        case ATTACK:
-            envelopeValue += attackIncrement;
-        if (envelopeValue >= 1.0) {
-            envelopeValue = 1.0;
-            state = SUSTAIN;
-        }
-        break;
-        case SUSTAIN:
-            envelopeValue = 1.0;
-        break;
-        case RELEASE:
-            envelopeValue -= releaseIncrement;
-        if (envelopeValue <= 0.0) {
-            envelopeValue = 0.0;
-            state = IDLE;
-        }
-        break;
-        case IDLE:
-            envelopeValue = 0.0;
-        break;
+void Envelope::enterState(State newState) {
+    currentState = newState;
+    sampleCounter = 0;
+
+    switch (currentState) {
+        case State::ATTACK:
+            samplesInCurrentStage = static_cast<int>(attackTime * sampleRate);
+            break;
+            case State:: RELEASE:
+            samplesInCurrentStage = static_cast<int>(releaseTime * sampleRate);
+            break;
+        case State::SUSTAIN:
+        case State::IDLE:
+            samplesInCurrentStage = 0;
+            break;
     }
-    envelopeValue = std::clamp(envelopeValue, 0.0, 1.0);
 }
 
 void Envelope::process(float* buffer, int frames) {
     for (int i = 0; i < frames; ++i) {
-        update();
-        float gain = static_cast<float>(getValue());
-        buffer[i] *= gain; // Appliquer gain MONO
-    }
-}
+        switch (currentState) {
+            case State::ATTACK:
+                if (samplesInCurrentStage > 0) {
+                    envelopeValue = static_cast<double>(sampleCounter) / samplesInCurrentStage;
+                } else {
+                    envelopeValue = 1.0;
+                }
+                sampleCounter++;
+                if (sampleCounter >= samplesInCurrentStage) {
+                    enterState(State::SUSTAIN);
+                }
+                break;
 
-void Envelope::updateIncrements() {
-    attackIncrement = (attackTime > 0.0) ? (1.0 / (attackTime * sampleRate)) : 1.0;
-    releaseIncrement = (releaseTime > 0.0) ? (1.0 / (releaseTime * sampleRate)) : 1.0;
+                case State::SUSTAIN:
+                envelopeValue = 1.0;
+                break;
+
+            case State::RELEASE:
+                if (samplesInCurrentStage > 0) {
+                    envelopeValue = 1.0 - (static_cast<double>(sampleCounter) / samplesInCurrentStage);
+                } else {
+                    envelopeValue = 0.0;
+                }
+                sampleCounter++;
+                if (sampleCounter >= samplesInCurrentStage) {
+                    enterState(State::IDLE);
+                }
+                break;
+
+                case State::IDLE:
+                envelopeValue = 0.0;
+                break;
+        }
+
+        // Clamp pour éviter les dépassement
+        envelopeValue = std::clamp(envelopeValue, 0.0, 1.0);
+        buffer[i] *= static_cast<float>(envelopeValue);
+    }
 }

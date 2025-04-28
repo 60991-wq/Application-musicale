@@ -3,29 +3,37 @@
 
 class Envelope {
 public:
-    explicit Envelope(double sampleRate);
+    enum class State {
+        IDLE,
+        ATTACK,
+        SUSTAIN,
+        RELEASE,
+    };
+
+    explicit Envelope(double sampleRate = 44100.0);
+
+    void setSampleRate(double rate);
+    void setParameters(double attackTimeSeconds, double releaseTimeSeconds);
 
     void noteOn();
     void noteOff();
 
-    void setAttackTime(double seconds);
-    void setReleaseTime(double seconds);
-
-    double getValue() const; // le volume est entre 0.0 et 1.0
-    void update();
     void process(float* buffer, int frames);
+    bool isRunning() const;
 
 private:
-    enum State {IDLE, ATTACK, SUSTAIN, RELEASE} state;
+    void enterState(State newState);
+
+    State currentState;
+
     double sampleRate;
     double envelopeValue;
 
-    double attackTime;
-    double releaseTime;
+    double attackTime;     // secondes
+    double releaseTime;    // secondes
 
-    double attackIncrement;
-    double releaseIncrement;
-    void updateIncrements();
+    int sampleCounter;
+    int samplesInCurrentStage;
 };
 
-#endif //ENVELOPE_H
+#endif // ENVELOPE_H
