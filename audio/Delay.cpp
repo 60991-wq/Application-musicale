@@ -1,58 +1,43 @@
-//
-// Created by anini on 03-04-25.
-//
-
 #include "Delay.h"
-#include <cstring>
+#include "../util/Constants.h"
 
-Delay::Delay(double sampleRate)
-    : sampleRate(sampleRate),
-    delayMix(0.5f),
-    delayTime(0.5),
-    writeIndex(0),
-    readIndex(0){
-
-    bufferSize = static_cast<int>(sampleRate * 2.0);
-    delayBuffer.resize(bufferSize * 2,0.0f);
-    updateReadIndex();
-
+Delay::Delay() {
+    // Créer un buffer circulaire de 2 secondes max
+    delayBuffer.resize(Constants::SampleRate * 2 , 0.0f); // 2 secondes stéréo
+    writeIndex = 0;
+    delayTime = 0.3f; // 300ms par défaut
+    mix = 0.2f;       // 20% par défaut
 }
-#include "Delay.h"
 
-void Delay::setDelayTime(double seconds) {
+void Delay::setDelayTime(float seconds) {
     delayTime = seconds;
-    updateReadIndex();
 }
 
-void Delay::setMix(float mix) {
-    delayMix = mix;
-}
-
-void Delay::updateReadIndex() {
-    int delaySamples = static_cast<int>(sampleRate * delayTime);
-    readIndex = writeIndex - delaySamples;
-    if (readIndex < 0) {
-        readIndex += bufferSize;
-    }
+void Delay::setMix(float mixValue) {
+    mix = mixValue;
 }
 
 void Delay::process(float* buffer, int frames) {
-    for (int i = 0; i < frames; ++i) {
-        // canaux stéréo
-        for (int ch = 0; ch < 2; ++ch) {
-            int bufIdx = i * 2 + ch;
+    // Calcul du délai en échantillons
+    int delaySamples = static_cast<int>(delayTime * Constants::SampleRate) * 2; // *2 pour stéréo
 
-            float dry = buffer[bufIdx];  // son actuel
-            float delayed = delayBuffer[(readIndex * 2 + ch) % (bufferSize * 2)];
-
-            buffer[bufIdx] += delayed * delayMix;  // mix dans l’output
-            delayBuffer[(writeIndex * 2 + ch) % (bufferSize * 2)] = dry;  // stocke
-
+    for (int i = 0; i < frames * 2; ++i) { // *2 pour stéréo
+        // Calculer l'index de lecture
+        int readIndex = writeIndex - delaySamples;
+        if (readIndex < 0) {
+            readIndex += delayBuffer.size();
         }
 
-        writeIndex = (writeIndex + 1) % bufferSize;
-        readIndex = (readIndex + 1) % bufferSize;
+        // Lecture de l'échantillon retardé
+        float delayedSample = delayBuffer[readIndex];
+
+        // Application de l'algorithme de delay (selon l'énoncé)
+        buffer[i] = buffer[i] + mix * delayedSample;
+
+        // Stockage de l'échantillon actuel
+        delayBuffer[writeIndex] = buffer[i];
+        
+        // Avancer l'index d'écriture
+        writeIndex = (writeIndex + 1) % delayBuffer.size();
     }
 }
-
-

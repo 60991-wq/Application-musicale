@@ -1,36 +1,25 @@
-//
-// Created by anini on 03-04-25.
-//
-
 #ifndef DELAY_H
 #define DELAY_H
-#include <vector>
 
+#include <vector>
 
 class Delay {
 public:
-    Delay(double sampleRate);
-    void setDelayTime(double seconds);
-    void setMix(float mix);
-    void process(float* buffer , int frames);
+    // Constructeur par défaut
+    Delay();
 
+    // Méthodes pour définir les paramètres
+    void setDelayTime(float seconds);
+    void setMix(float mixValue);
 
-    private:
+    // Méthode pour traiter le son
+    void process(float* buffer, int frames);
+
+private:
     std::vector<float> delayBuffer;
-    int bufferSize;
     int writeIndex;
-    int readIndex;
-    double sampleRate;
-
-    float delayMix;
-    double delayTime;
-
-    void updateReadIndex();
-
-
-
+    float delayTime;
+    float mix;
 };
 
-
-
-#endif //DELAY_H
+#endif // DELAY_H

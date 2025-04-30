@@ -10,7 +10,7 @@ public: // tout les forme d'onde que je dois avoir
         SAW
     };
 
-    explicit Oscillator(double sampleRate, float noteFreq);
+    explicit Oscillator();
     
     void setFrequency(double hz);
     void setWaveform(Waveform wf);

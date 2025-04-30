@@ -15,20 +15,20 @@ void MainWindow::init() {
 
     // Setup SDL
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) {
-        SDL_Log("Error: SDL_Init(): %s\n", SDL_GetError());
+        SDL_Log("Error: SDL_Init(): %s", SDL_GetError());
         return;
     }
     // Create window with SDL_Renderer graphics context
     Uint32 window_flags = SDL_WINDOW_HIDDEN;
     window = SDL_CreateWindow("", 750, 500, window_flags);
     if (nullptr == window) {
-        SDL_Log("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
+        SDL_Log("Error: SDL_CreateWindow(): %s", SDL_GetError());
         return;
     }
     renderer = SDL_CreateRenderer(window, nullptr);
     SDL_SetRenderVSync(renderer, 1);
     if (nullptr == renderer) {
-        SDL_Log("Error: SDL_CreateRenderer(): %s\n", SDL_GetError());
+        SDL_Log("Error: SDL_CreateRenderer(): %s", SDL_GetError());
         return;
     }
     SDL_SetWindowPosition(
@@ -43,7 +43,7 @@ void MainWindow::init() {
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 
     // Setup DearImGui style
-    ImGui::StyleColorsDark();
+    ImGui::StyleColorsLight();
     ImGui::GetStyle().WindowRounding = 0.0f;
 
     // Setup Platform/Renderer backends
@@ -103,7 +103,7 @@ void MainWindow::run() {
 }
 
 void MainWindow::draw() {
-    ImGui::SetNextWindowSize(ImVec2(600, 500));
+    ImGui::SetNextWindowSize(ImVec2(760, 500));
     ImGui::Begin("Synthétiseur", nullptr, ImGuiWindowFlags_NoResize);
 
     POD currentState = params.getCopy();
@@ -113,38 +113,38 @@ void MainWindow::draw() {
 
     // --- OSC1 Waveform (menu déroulant) ---
     const char* waveforms[] = { "SINE", "SQUARE", "SAW" };
-    ImGui::SetNextItemWidth(200);
+    ImGui::SetNextItemWidth(600);
     ImGui::Combo("OSC1 Waveform", &currentState.osc1Waveform, waveforms, IM_ARRAYSIZE(waveforms));
 
     // --- OSC1 Frequency Offset ---
-    ImGui::SetNextItemWidth(400);
+    ImGui::SetNextItemWidth(585);
     ImGui::SliderFloat("OSC1 Frequency Offset", &currentState.osc1OFrequencyOffset, -5.0f, 5.0f, "%.1f Hz");
 
     // --- OSC2 (checkbox) ---
     ImGui::Checkbox("OSC 2", &currentState.osc2Active);
 
     // --- Attack slider ---
-    ImGui::SetNextItemWidth(400);
+    ImGui::SetNextItemWidth(600);
     ImGui::SliderFloat("Attack", &currentState.attack, 0.0f, 1.0f, "%.2f sec");
 
     // --- Release slider ---
-    ImGui::SetNextItemWidth(400);
+    ImGui::SetNextItemWidth(600);
     ImGui::SliderFloat("Release", &currentState.release, 0.0f, 2.0f, "%.2f sec");
 
     // --- Filter Cutoff slider ---
-    ImGui::SetNextItemWidth(400);
+    ImGui::SetNextItemWidth(600);
     ImGui::SliderFloat("Filter Cutoff", &currentState.cutoff, 20.0f, 20000.0f, "%.0f Hz", ImGuiSliderFlags_Logarithmic);
 
     // --- Filter Resonance slider ---
-    ImGui::SetNextItemWidth(400);
+    ImGui::SetNextItemWidth(600);
     ImGui::SliderFloat("Filter Resonance", &currentState.resonance, 0.01f, 0.99f, "%.2f");
 
     // --- Delay Time slider ---
-    ImGui::SetNextItemWidth(400);
+    ImGui::SetNextItemWidth(600);
     ImGui::SliderFloat("Delay Time", &currentState.delayTime, 0.1f, 2.0f, "%.2f sec");
 
     // --- Delay Mix slider ---
-    ImGui::SetNextItemWidth(400);
+    ImGui::SetNextItemWidth(600);
     ImGui::SliderFloat("Delay Mix", &currentState.delayMix, 0.0f, 1.0f, "%.2f");
 
     // --- Clavier virtuel (13 boutons) ---
@@ -179,7 +179,7 @@ void MainWindow::draw() {
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.3f, 0.7f, 0.9f, 1.0f));
         }
 
-        if (ImGui::Button(noteNames[i], ImVec2(30, 50))) {
+        if (ImGui::Button(noteNames[i], ImVec2(30, 30))) {
             isAnyKeyPressed = true;
             currentState.activeNote = true;
             currentState.noteIndex = i;
@@ -189,7 +189,7 @@ void MainWindow::draw() {
             ImGui::PopStyleColor();
         }
 
-        if (i < 12) ImGui::SameLine();  // Ne pas ajouter SameLine après le dernier bouton
+        if (i < 12) ImGui::SameLine();  
 
         ImGui::PopID();
     }

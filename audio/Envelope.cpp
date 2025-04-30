@@ -52,7 +52,6 @@ void Envelope::enterState(State newState) {
         break;
     }
 }
-
 void Envelope::process(float* buffer, int frames) {
     for (int i = 0; i < frames; ++i) {
         switch (currentState) {
@@ -62,15 +61,15 @@ void Envelope::process(float* buffer, int frames) {
                 } else {
                     envelopeValue = 1.0;
                 }
-                sampleCounter++;
-                if (sampleCounter >= samplesInCurrentStage) {
-                    enterState(State::SUSTAIN);
-                }
-                break;
+            sampleCounter++;
+            if (sampleCounter >= samplesInCurrentStage) {
+                enterState(State::SUSTAIN);
+            }
+            break;
 
-                case State::SUSTAIN:
+            case State::SUSTAIN:
                 envelopeValue = 1.0;
-                break;
+            break;
 
             case State::RELEASE:
                 if (samplesInCurrentStage > 0) {
@@ -78,19 +77,20 @@ void Envelope::process(float* buffer, int frames) {
                 } else {
                     envelopeValue = 0.0;
                 }
-                sampleCounter++;
-                if (sampleCounter >= samplesInCurrentStage) {
-                    enterState(State::IDLE);
-                }
-                break;
+            sampleCounter++;
+            if (sampleCounter >= samplesInCurrentStage) {
+                enterState(State::IDLE);
+            }
+            break;
 
-                case State::IDLE:
+            case State::IDLE:
                 envelopeValue = 0.0;
-                break;
+            break;
         }
 
-        // Clamp pour éviter les dépassement
+        // Clamp pour éviter les dépassements
         envelopeValue = std::clamp(envelopeValue, 0.0, 1.0);
-        buffer[2 * i] *= static_cast<float>(envelopeValue);
-        buffer[2 * i + 1] *= static_cast<float>(envelopeValue);    }
+
+        buffer[i] *= static_cast<float>(envelopeValue);
+    }
 }
