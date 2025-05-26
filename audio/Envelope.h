@@ -18,7 +18,7 @@ public:
     void noteOn();
     void noteOff();
 
-    void process(float* buffer, int frames);
+    void process(float* buffer);
     bool isRunning() const;
 
 private:

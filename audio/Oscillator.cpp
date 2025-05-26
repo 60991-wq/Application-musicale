@@ -24,10 +24,10 @@ void Oscillator::setSampleRate(double rate) {
 }
 
 
-void Oscillator::process(float* buffer, int frames) {
+void Oscillator::process(float* buffer) {
 
     double phaseStep = Constants::TwoPi * frequency / sampleRate;
-    for (int i = 0; i < frames; ++i) {
+    for (int i = 0; i < Constants::FramesPerBuffer; ++i) {
         float sample = 0.0f;
 
         switch (waveform) {
@@ -35,7 +35,7 @@ void Oscillator::process(float* buffer, int frames) {
                 sample = static_cast<float>(sin(phase));
             break;
             case Waveform::SQUARE:
-                sample = (phase < M_PI) ? 1.0f : -1.0f;
+                sample = (phase < M_PI) ? -1.0f : 1.0f;
             break;
             case Waveform::SAW:
                 sample = static_cast<float>(2.0 * (phase / Constants::TwoPi) - 1.0);

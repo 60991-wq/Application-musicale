@@ -5,10 +5,12 @@
 #include "imgui_impl_sdlrenderer3.h"
 #include <cmath>
 
+#include "util/Constants.h"
+
 constexpr float FRAMERATE = 60.0f;
 constexpr std::chrono::duration<double, std::milli> TARGET_FRAMETIME(1000.0 / FRAMERATE);
 
-MainWindow::MainWindow(LockedPOD& params)
+MainWindow::MainWindow(LockedSynthParameters& params)
     : params(params) // Initialisation du LockedPOD
 {}
 void MainWindow::init() {
@@ -106,7 +108,7 @@ void MainWindow::draw() {
     ImGui::SetNextWindowSize(ImVec2(760, 500));
     ImGui::Begin("Synthétiseur", nullptr, ImGuiWindowFlags_NoResize);
 
-    POD currentState = params.getCopy();
+    SynthParameters currentState = params.getCopy();
 
     // --- OSC1 et OSC2 (checkboxes) ---
     ImGui::Checkbox("OSC 1", &currentState.osc1Active);
@@ -133,7 +135,7 @@ void MainWindow::draw() {
 
     // --- Filter Cutoff slider ---
     ImGui::SetNextItemWidth(600);
-    ImGui::SliderFloat("Filter Cutoff", &currentState.cutoff, 20.0f, 20000.0f, "%.0f Hz", ImGuiSliderFlags_Logarithmic);
+    ImGui::SliderFloat("Filter Cutoff", &currentState.cutoff, 20.0f, Constants::FilterCutoff-1, "%.0f Hz", ImGuiSliderFlags_Logarithmic);
 
     // --- Filter Resonance slider ---
     ImGui::SetNextItemWidth(600);
@@ -189,7 +191,7 @@ void MainWindow::draw() {
             ImGui::PopStyleColor();
         }
 
-        if (i < 12) ImGui::SameLine();  
+        if (i < 12) ImGui::SameLine();
 
         ImGui::PopID();
     }

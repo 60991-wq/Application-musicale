@@ -5,7 +5,7 @@
 
 int main() {
     // Crée un POD sécurisé
-    LockedPOD sharedParams;
+    LockedSynthParameters sharedParams;
 
     // Crée le générateur audio
     AudioGenerator generator(sharedParams);

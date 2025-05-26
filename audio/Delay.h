@@ -13,7 +13,7 @@ public:
     void setMix(float mixValue);
 
     // Méthode pour traiter le son
-    void process(float* buffer, int frames);
+    void process(float* buffer);
 
 private:
     std::vector<float> delayBuffer;

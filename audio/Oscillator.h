@@ -1,6 +1,4 @@
 #pragma once
-#include "Envelope.h"
-#include "Filter.h"
 
 class Oscillator {
 public: // tout les forme d'onde que je dois avoir
@@ -17,7 +15,7 @@ public: // tout les forme d'onde que je dois avoir
     void setSampleRate(double rate);
     void resetPhase();
 
-    void process(float* buffer, int frames);
+    void process(float* buffer);
 
 
 private:

@@ -5,7 +5,7 @@
 #include <SDL3/SDL.h>
 class MainWindow {
 public:
-    MainWindow(LockedPOD& params);
+    MainWindow(LockedSynthParameters& params);
     void init();
     void run();
 private:
@@ -14,7 +14,7 @@ private:
     SDL_Window* window { nullptr };
     SDL_Renderer* renderer { nullptr };
 
-    LockedPOD& params;
+    LockedSynthParameters& params;
 };
 
 #endif //TESTINSTRUCT_MAINWINDOW_H

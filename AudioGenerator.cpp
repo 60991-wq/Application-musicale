@@ -3,12 +3,14 @@
 #include <iostream>
 #include <algorithm>
 #include <cmath>
+#include "audio/Envelope.h"
 
 #include "audio/Delay.h"
+AudioGenerator::AudioGenerator(LockedSynthParameters &sharedParams)
+    : params(sharedParams), wavOut("dump.wav",Constants::SampleRate)
+     {
+}
 
-// Constructeur : initialise les références et les modules audio
-AudioGenerator::AudioGenerator(LockedPOD &sharedParams)
-               : params(sharedParams){}
 
 // Fonction d'initialisation PortAudio
 void AudioGenerator::init() {
@@ -37,92 +39,67 @@ void AudioGenerator::init() {
         std::cerr << "PortAudio error in Pa_StartStream(): " << Pa_GetErrorText(errorStream) << '\n';
     }
 }
-
 int AudioGenerator::audioCallback(const void*, void* outputBuffer,
                                   unsigned long framesPerBuffer,
                                   const PaStreamCallbackTimeInfo*,
                                   PaStreamCallbackFlags,
                                   void* userData) {
-    auto* generator = static_cast<AudioGenerator*>(userData); // userData est toujours AudioGenerator*
+    auto* generator = static_cast<AudioGenerator*>(userData);
     float* out = static_cast<float*>(outputBuffer);
 
-    // Variables statiques pour les modules audio
-    static Oscillator osc1;
-    static Oscillator osc2;
-    static Envelope envelope(Constants::SampleRate);
-    static Filter filter;
-    static Delay delay;
-    static double currentTimeInSeconds = 0.0;
+    SynthParameters paramsSnapshot = generator->params.getCopy();
 
-    POD paramsSnapshot = generator->params.getCopy();
-
-    static bool previousNoteState = false;
     bool currentNoteState = paramsSnapshot.activeNote;
 
-    if (currentNoteState && !previousNoteState) {
-        osc1.resetPhase();
-        osc2.resetPhase();
-        envelope.noteOn();
+    if (currentNoteState && !generator->previousNoteState) {
+        generator->osc1.resetPhase();
+        generator->osc2.resetPhase();
+        generator->envelope.noteOn();
+    } else if (!currentNoteState && generator->previousNoteState) {
+        generator->envelope.noteOff();
     }
-    else if (!currentNoteState && previousNoteState) {
-        envelope.noteOff();
-    }
-    previousNoteState = currentNoteState;
+    generator->previousNoteState = currentNoteState;
 
     float baseFrequency = 261.63f;
     float noteFreq = baseFrequency * std::pow(2.0f, paramsSnapshot.noteIndex / 12.0f);
 
-    osc1.setFrequency(noteFreq + paramsSnapshot.osc1OFrequencyOffset);
-    osc1.setWaveform(static_cast<Oscillator::Waveform>(paramsSnapshot.osc1Waveform));
-    osc2.setFrequency(noteFreq);
+    generator->osc1.setFrequency(noteFreq + paramsSnapshot.osc1OFrequencyOffset);
+    generator->osc1.setWaveform(static_cast<Oscillator::Waveform>(paramsSnapshot.osc1Waveform));
 
-    // l'oscillateur 2 doit toujours être en mode dent de scie (SAW)
-    osc2.setWaveform(Oscillator::Waveform::SAW);
+    generator->osc2.setFrequency(noteFreq);
+    generator->osc2.setWaveform(Oscillator::Waveform::SAW);
 
-    envelope.setParameters(paramsSnapshot.attack, paramsSnapshot.release);
+    generator->envelope.setParameters(paramsSnapshot.attack, paramsSnapshot.release);
 
-    // --- Génération des signaux MONO ---
-    float bufferOsc1[Constants::FramesPerBuffer];
-    float bufferOsc2[Constants::FramesPerBuffer];
-    float mixBuffer[Constants::FramesPerBuffer];
+    float bufferOsc1[Constants::FramesPerBuffer]{};
+    float bufferOsc2[Constants::FramesPerBuffer]{};
+    float mixBuffer[Constants::FramesPerBuffer]{};
 
-    std::fill(bufferOsc1, bufferOsc1 + framesPerBuffer, 0.0f);
-    std::fill(bufferOsc2, bufferOsc2 + framesPerBuffer, 0.0f);
-    std::fill(mixBuffer, mixBuffer + framesPerBuffer, 0.0f);
-
-    // Générer les sons des oscillateurs seulement s'ils sont actifs
     if (paramsSnapshot.osc1Active)
-        osc1.process(bufferOsc1, framesPerBuffer);
-
+        generator->osc1.process(bufferOsc1);
     if (paramsSnapshot.osc2Active)
-        osc2.process(bufferOsc2, framesPerBuffer);
+        generator->osc2.process(bufferOsc2);
 
-    // Mixage MONO des deux oscillateurs
-    for (unsigned long i = 0; i < framesPerBuffer; ++i) {
+    for (unsigned long i = 0; i < framesPerBuffer; ++i)
         mixBuffer[i] = 0.5f * (bufferOsc1[i] + bufferOsc2[i]);
-    }
 
-    // Application de l'enveloppe MONO
-    envelope.process(mixBuffer, framesPerBuffer);
+    generator->envelope.process(mixBuffer);
 
-    // Application du filtre MONO
-    filter.setCutoff(paramsSnapshot.cutoff);
-    filter.setResonance(paramsSnapshot.resonance);
-    filter.process(mixBuffer, framesPerBuffer);
+    generator->filter.setCutoff(paramsSnapshot.cutoff);
+    generator->filter.setResonance(paramsSnapshot.resonance);
+    generator->filter.process(mixBuffer);
 
-    // Application du delay MONO
-    delay.setDelayTime(paramsSnapshot.delayTime);
-    delay.setMix(paramsSnapshot.delayMix);
-    delay.process(mixBuffer, framesPerBuffer);
+    generator->delay.setDelayTime(paramsSnapshot.delayTime);
+    generator->delay.setMix(paramsSnapshot.delayMix);
+    generator->delay.process(mixBuffer);
 
-    // Conversion MONO vers STÉRÉO entrelacé pour la sortie
     for (unsigned long i = 0; i < framesPerBuffer; ++i) {
-        out[2*i] = mixBuffer[i];      // Canal gauche
-        out[2*i+1] = mixBuffer[i];    // Canal droit
+        out[2*i]     = mixBuffer[i];
+        out[2*i + 1] = mixBuffer[i];
+        generator->wavOut.push_frame(out[2*i], out[2*i + 1]);
     }
 
-    // Mise à jour du temps
-    currentTimeInSeconds += framesPerBuffer / static_cast<double>(Constants::SampleRate);
+    generator->currentTimeInSeconds += framesPerBuffer / static_cast<double>(Constants::SampleRate);
 
     return paContinue;
 }

@@ -1,16 +1,24 @@
 #ifndef AUDIOGENERATOR_H
 #define AUDIOGENERATOR_H
 
+#include <memory>
+
 #include "portaudio.h"
 #include "audio/Oscillator.h"
 #include "audio/Filter.h"
 #include "AudioParam.h"
+#include "audio/WavOut.h"
+#include "audio/Delay.h"
+#include "audio/Envelope.h"
+
 #include <vector>
+
+#include "audio/WavOut.h"
 
 
 class AudioGenerator {
 public:
-    explicit AudioGenerator(LockedPOD& sharedParams);
+    explicit AudioGenerator(LockedSynthParameters& sharedParams);
     void init();
 private:
     static int audioCallback(const void*, void* outputBuffer,
@@ -19,7 +27,16 @@ private:
                              void* userData);
 
     PaStream* stream {nullptr};
-    LockedPOD& params;
+    LockedSynthParameters& params;
+    WavOut<2> wavOut;
+
+    Oscillator osc1;
+    Oscillator osc2;
+    Envelope envelope;
+    Filter filter;
+    Delay delay;
+    double currentTimeInSeconds {0.0};
+    bool previousNoteState {false};
 };
 
 #endif // AUDIOGENERATOR_H

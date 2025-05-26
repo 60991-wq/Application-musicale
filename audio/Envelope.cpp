@@ -1,6 +1,8 @@
 #include "Envelope.h"
 #include <algorithm> // Pour std::clamp
 
+#include "../util/Constants.h"
+
 Envelope::Envelope(double sampleRate)
     : sampleRate(sampleRate),
       currentState(State::IDLE),
@@ -52,8 +54,8 @@ void Envelope::enterState(State newState) {
         break;
     }
 }
-void Envelope::process(float* buffer, int frames) {
-    for (int i = 0; i < frames; ++i) {
+void Envelope::process(float* buffer) {
+    for (int i = 0; i < Constants::FramesPerBuffer; ++i) {
         switch (currentState) {
             case State::ATTACK:
                 if (samplesInCurrentStage > 0) {
