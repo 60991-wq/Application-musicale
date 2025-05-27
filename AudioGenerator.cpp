@@ -6,10 +6,71 @@
 #include "audio/Envelope.h"
 
 #include "audio/Delay.h"
+
 AudioGenerator::AudioGenerator(LockedSynthParameters &sharedParams)
-    : params(sharedParams), wavOut("dump.wav",Constants::SampleRate)
-     {
+    : params(sharedParams), wavOut("dump.wav", Constants::SampleRate) {
 }
+
+void AudioGenerator::handleNoteEvents(const SynthParameters &paramsSnapshot) {
+    bool currentNoteState = paramsSnapshot.activeNote;
+    if (currentNoteState && !previousNoteState) {
+        osc1.resetPhase();
+        osc2.resetPhase();
+        envelope.noteOn();
+    } else if (!currentNoteState && previousNoteState) {
+        envelope.noteOff();
+    }
+    previousNoteState = currentNoteState;
+}
+
+
+void AudioGenerator::processOscillators(float *outBuffer, const SynthParameters &params, unsigned long numSamples) {
+    float noteFreq = 261.63f * std::pow(2.0f, params.noteIndex / 12.0f);
+
+    osc1.setFrequency(noteFreq + params.osc1FrequencyOffsetHz);
+    osc1.setWaveform(static_cast<Oscillator::Waveform>(params.osc1Waveform));
+
+    osc2.setFrequency(noteFreq);
+    osc2.setWaveform(Oscillator::Waveform::SAW);
+
+    float bufferOsc1[Constants::FramesPerBuffer]{};
+    float bufferOsc2[Constants::FramesPerBuffer]{};
+
+    if (params.osc1Active)
+        osc1.process(bufferOsc1);
+    if (params.osc2Active)
+        osc2.process(bufferOsc2);
+
+    for (unsigned long i = 0; i < numSamples; ++i)
+        outBuffer[i] = 0.5f * (bufferOsc1[i] + bufferOsc2[i]);
+}
+
+void AudioGenerator::applyEnvelope(float *buffer) {
+    envelope.process(buffer);
+}
+
+
+void AudioGenerator::applyFilter(float *buffer, const SynthParameters &params) {
+    filter.setCutoffFrequencyHz(params.filterCutoffHz);
+    filter.setResonance(params.filterResonance);
+    for (unsigned long i = 0; i < Constants::FramesPerBuffer; ++i)
+        buffer[i] = filter.process(buffer[i]);
+}
+
+
+void AudioGenerator::applyDelay(float *buffer, const SynthParameters &params) {
+    delay.setDelayTime(params.delayTimeSec);
+    delay.setMix(params.delayMix);
+    delay.process(buffer);
+}
+
+void AudioGenerator::outputToStereo(float *out, const float *monoBuffer) {
+    for (unsigned long i = 0; i < Constants::FramesPerBuffer; ++i) {
+        out[2 * i] = monoBuffer[i];
+        out[2 * i + 1] = monoBuffer[i];
+    }
+}
+
 
 void AudioGenerator::init() {
     PaError errorInit = Pa_Initialize();
@@ -36,79 +97,50 @@ void AudioGenerator::init() {
     }
 }
 
-int AudioGenerator::audioCallback(const void*, void* outputBuffer,
+int AudioGenerator::audioCallback(const void *, void *outputBuffer,
                                   unsigned long framesPerBuffer,
-                                  const PaStreamCallbackTimeInfo*,
+                                  const PaStreamCallbackTimeInfo *,
                                   PaStreamCallbackFlags,
-                                  void* userData) {
-    auto* generator = static_cast<AudioGenerator*>(userData);
-    float* out = static_cast<float*>(outputBuffer);
+                                  void *userData) {
+    auto *generator = static_cast<AudioGenerator *>(userData);
+    float *out = static_cast<float *>(outputBuffer);
 
     SynthParameters paramsSnapshot = generator->params.getCopy();
+
     static int debugCounter = 0;
-    if (debugCounter++ % 100 == 0) { // Affiche une fois toutes les 100 callbacks
+    if (debugCounter++ % 100 == 0) {
         std::cout << "[DEBUG] Cutoff: " << paramsSnapshot.filterCutoffHz
-                  << ", Resonance: " << paramsSnapshot.filterResonance << std::endl;
+                << ", Resonance: " << paramsSnapshot.filterResonance << std::endl;
     }
 
+    // Gère les événements de note (note on/off)
+    generator->handleNoteEvents(paramsSnapshot);
 
-
-    bool currentNoteState = paramsSnapshot.activeNote;
-
-    if (currentNoteState && !generator->previousNoteState) {
-        generator->osc1.resetPhase();
-        generator->osc2.resetPhase();
-        generator->envelope.noteOn();
-    } else if (!currentNoteState && generator->previousNoteState) {
-        generator->envelope.noteOff();
-    }
-    generator->previousNoteState = currentNoteState;
-
-    float baseFrequency = 261.63f;
-    float noteFreq = baseFrequency * std::pow(2.0f, paramsSnapshot.noteIndex / 12.0f);
-
-    generator->osc1.setFrequency(noteFreq + paramsSnapshot.osc1FrequencyOffsetHz);
-    generator->osc1.setWaveform(static_cast<Oscillator::Waveform>(paramsSnapshot.osc1Waveform));
-
-    generator->osc2.setFrequency(noteFreq);
-    generator->osc2.setWaveform(Oscillator::Waveform::SAW);
-
-    generator->envelope.setParameters(paramsSnapshot.envelopeAttackSec, paramsSnapshot.envelopeReleaseSec);
-
-    float bufferOsc1[Constants::FramesPerBuffer]{};
-    float bufferOsc2[Constants::FramesPerBuffer]{};
+    // Génère les signaux des oscillateurs
     float mixBuffer[Constants::FramesPerBuffer]{};
+    generator->processOscillators(mixBuffer, paramsSnapshot, framesPerBuffer);
 
-    if (paramsSnapshot.osc1Active)
-        generator->osc1.process(bufferOsc1);
-    if (paramsSnapshot.osc2Active)
-        generator->osc2.process(bufferOsc2);
+    generator->envelope.setParameters(
+        paramsSnapshot.envelopeAttackSec,
+        paramsSnapshot.envelopeReleaseSec
+    );
 
-    for (unsigned long i = 0; i < framesPerBuffer; ++i)
-        mixBuffer[i] = 0.5f * (bufferOsc1[i] + bufferOsc2[i]);
-
-    generator->envelope.process(mixBuffer);
-
-    generator->filter.setCutoffFrequencyHz(paramsSnapshot.filterCutoffHz);
-    generator->filter.setResonance(paramsSnapshot.filterResonance);
-    for (unsigned long i = 0; i < framesPerBuffer; ++i) {
-        mixBuffer[i] = generator->filter.process(mixBuffer[i]);
-    }
+    // Applique l'enveloppe ADSR
+    generator->applyEnvelope(mixBuffer);
 
 
-    generator->delay.setDelayTime(paramsSnapshot.delayTimeSec);
-    generator->delay.setMix(paramsSnapshot.delayMix);
-    generator->delay.process(mixBuffer);
+    // Applique le filtre passe-bas
+    generator->applyFilter(mixBuffer, paramsSnapshot);
 
+    // Applique l'effet de delay
+    generator->applyDelay(mixBuffer, paramsSnapshot);
 
+    // Sortie stéréo + enregistrement WAV
+    generator->outputToStereo(out, mixBuffer);
 
-    for (unsigned long i = 0; i < framesPerBuffer; ++i) {
-        out[2 * i]     = mixBuffer[i];
-        out[2 * i + 1] = mixBuffer[i];
-        generator->wavOut.push_frame(out[2 * i], out[2 * i + 1]);
-    }
-
+    // Mise à jour du temps courant
     generator->currentTimeInSeconds += framesPerBuffer / static_cast<double>(Constants::SampleRate);
+    // generator->wavOut.push_frame()
 
     return paContinue;
 }

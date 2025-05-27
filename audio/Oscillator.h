@@ -2,7 +2,6 @@
 
 class Oscillator {
 public:
-
     enum class Waveform {
         SINE,
         SQUARE,
@@ -20,7 +19,7 @@ public:
     void resetPhase();
 
 
-    void process(float* audioBuffer);
+    void process(float *audioBuffer);
 
 private:
     double currentSampleRate;

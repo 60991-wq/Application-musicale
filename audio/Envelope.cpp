@@ -9,8 +9,7 @@ Envelope::Envelope()
       attackDurationSeconds(0.1),
       releaseDurationSeconds(0.5),
       elapsedSamplesInStage(0),
-      totalSamplesInStage(0)
-{
+      totalSamplesInStage(0) {
 }
 
 void Envelope::setSampleRate(double newSampleRate) {
@@ -56,7 +55,7 @@ void Envelope::enterState(State newState) {
     }
 }
 
-void Envelope::process(float* audioBuffer) {
+void Envelope::process(float *audioBuffer) {
     for (int i = 0; i < Constants::FramesPerBuffer; ++i) {
         switch (currentState) {
             case State::ATTACK:

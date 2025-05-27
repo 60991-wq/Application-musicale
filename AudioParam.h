@@ -6,7 +6,6 @@
 #include <mutex>
 
 struct SynthParameters {
-
     bool osc1Active = true;
     int osc1Waveform = 0;
     float osc1Phase = 0.0f;
@@ -32,8 +31,10 @@ struct SynthParameters {
 class LockedSynthParameters {
 public:
     LockedSynthParameters() = default;
+
     SynthParameters getCopy() const;
-    void upDate(const SynthParameters& newData);
+
+    void upDate(const SynthParameters &newData);
 
 private:
     mutable std::mutex mutex;

@@ -2,11 +2,10 @@
 #include "../util/Constants.h"
 
 Delay::Delay() {
-    // Créer un buffer circulaire de 2 secondes max
-    delayBuffer.resize(Constants::SampleRate * 2 , 0.0f); // 2 secondes stéréo
+    delayBuffer.resize(Constants::SampleRate * 2, 0.0f);
     writeIndex = 0;
-    delayTime = 0.3f; // 300ms par défaut
-    mix = 0.2f;       // 20% par défaut
+    delayTime = 0.3f;
+    mix = 0.2f;
 }
 
 void Delay::setDelayTime(float seconds) {
@@ -17,27 +16,21 @@ void Delay::setMix(float mixValue) {
     mix = mixValue;
 }
 
-void Delay::process(float* buffer) {
-    // Calcul du délai en échantillons
+void Delay::process(float *buffer) {
     int delaySamples = static_cast<int>(delayTime * Constants::SampleRate);
 
-    for (int i = 0; i < Constants::FramesPerBuffer ; ++i) { // *2 pour stéréo
-        // Calculer l'index de lecture
+    for (int i = 0; i < Constants::FramesPerBuffer; ++i) {
         int readIndex = writeIndex - delaySamples;
         if (readIndex < 0) {
             readIndex += delayBuffer.size();
         }
 
-        // Lecture de l'échantillon retardé
         float delayedSample = delayBuffer[readIndex];
 
-        // Application de l'algorithme de delay (selon l'énoncé)
         buffer[i] = buffer[i] + mix * delayedSample;
 
-        // Stockage de l'échantillon actuel
         delayBuffer[writeIndex] = buffer[i];
 
-        // Avancer l'index d'écriture
         writeIndex = (writeIndex + 1) % delayBuffer.size();
     }
 }

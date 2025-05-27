@@ -3,10 +3,10 @@
 
 class Filter {
 public:
-
     explicit Filter();
 
     void setCutoffFrequencyHz(float newCutoffFrequencyHz);
+
     void setResonance(float newResonance);
 
     float process(float audioBuffer);
@@ -20,6 +20,6 @@ private:
     float a0 = 0.0f, a1 = 0.0f, a2 = 0.0f;
     float b1 = 0.0f, b2 = 0.0f;
 
-    float prevInput1 = 0.0f, prevInput2= 0.0f;
-    float prevOutput1 = 0.0f, prevOutput2= 0.0f;
+    float prevInput1 = 0.0f, prevInput2 = 0.0f;
+    float prevOutput1 = 0.0f, prevOutput2 = 0.0f;
 };

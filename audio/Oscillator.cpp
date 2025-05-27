@@ -26,7 +26,7 @@ void Oscillator::setSampleRate(double newSampleRate) {
     currentSampleRate = newSampleRate;
 }
 
-void Oscillator::process(float* audioBuffer) {
+void Oscillator::process(float *audioBuffer) {
     double phaseIncrement = Constants::TwoPi * currentFrequencyHz / currentSampleRate;
 
     for (int i = 0; i < Constants::FramesPerBuffer; ++i) {
@@ -35,15 +35,15 @@ void Oscillator::process(float* audioBuffer) {
         switch (waveformType) {
             case Waveform::SINE:
                 sampleValue = static_cast<float>(sin(phaseRadians));
-            break;
+                break;
 
             case Waveform::SQUARE:
                 sampleValue = (phaseRadians < M_PI) ? -1.0f : 1.0f;
-            break;
+                break;
 
             case Waveform::SAW:
                 sampleValue = static_cast<float>((2.0 * (phaseRadians / Constants::TwoPi)) - 1.0);
-            break;
+                break;
         }
 
         audioBuffer[i] = sampleValue;
