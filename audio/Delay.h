@@ -5,16 +5,12 @@
 
 class Delay {
 public:
-    // Constructeur par défaut
-    Delay();
-
-    // Méthodes pour définir les paramètres
+ explicit Delay();
     void setDelayTime(float seconds);
     void setMix(float mixValue);
 
     // Méthode pour traiter le son
     void process(float* buffer);
-
 private:
     std::vector<float> delayBuffer;
     int writeIndex;

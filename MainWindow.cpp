@@ -11,7 +11,7 @@ constexpr float FRAMERATE = 60.0f;
 constexpr std::chrono::duration<double, std::milli> TARGET_FRAMETIME(1000.0 / FRAMERATE);
 
 MainWindow::MainWindow(LockedSynthParameters& params)
-    : params(params) // Initialisation du LockedPOD
+    : params(params)
 {}
 void MainWindow::init() {
 
@@ -120,34 +120,35 @@ void MainWindow::draw() {
 
     // --- OSC1 Frequency Offset ---
     ImGui::SetNextItemWidth(585);
-    ImGui::SliderFloat("OSC1 Frequency Offset", &currentState.osc1OFrequencyOffset, -5.0f, 5.0f, "%.1f Hz");
+    ImGui::SliderFloat("OSC1 Frequency Offset", &currentState.osc1FrequencyOffsetHz, -5.0f, 5.0f, "%.1f Hz");
 
     // --- OSC2 (checkbox) ---
     ImGui::Checkbox("OSC 2", &currentState.osc2Active);
 
     // --- Attack slider ---
     ImGui::SetNextItemWidth(600);
-    ImGui::SliderFloat("Attack", &currentState.attack, 0.0f, 1.0f, "%.2f sec");
+    ImGui::SliderFloat("Attack", &currentState.envelopeAttackSec, 0.0f, 1.0f, "%.2f sec");
 
     // --- Release slider ---
     ImGui::SetNextItemWidth(600);
-    ImGui::SliderFloat("Release", &currentState.release, 0.0f, 2.0f, "%.2f sec");
+    ImGui::SliderFloat("Release", &currentState.envelopeReleaseSec, 0.0f, 2.0f, "%.2f sec");
 
     // --- Filter Cutoff slider ---
     ImGui::SetNextItemWidth(600);
-    ImGui::SliderFloat("Filter Cutoff", &currentState.cutoff, 20.0f, Constants::FilterCutoff-1, "%.0f Hz", ImGuiSliderFlags_Logarithmic);
+    ImGui::SliderFloat("Filter Cutoff", &currentState.filterCutoffHz, 20.0f, 20000, "%.0f Hz", ImGuiSliderFlags_Logarithmic);
 
     // --- Filter Resonance slider ---
     ImGui::SetNextItemWidth(600);
-    ImGui::SliderFloat("Filter Resonance", &currentState.resonance, 0.01f, 0.99f, "%.2f");
+    ImGui::SliderFloat("Filter Resonance", &currentState.filterResonance, 0.01f, 0.99f, "%.2f");
 
     // --- Delay Time slider ---
     ImGui::SetNextItemWidth(600);
-    ImGui::SliderFloat("Delay Time", &currentState.delayTime, 0.1f, 2.0f, "%.2f sec");
+    ImGui::SliderFloat("Delay Time", &currentState.delayTimeSec, 0.1f, 2.0f, "%.2f sec");
 
     // --- Delay Mix slider ---
     ImGui::SetNextItemWidth(600);
     ImGui::SliderFloat("Delay Mix", &currentState.delayMix, 0.0f, 1.0f, "%.2f");
+
 
     // --- Clavier virtuel (13 boutons) ---
     ImGui::Separator();
@@ -199,8 +200,8 @@ void MainWindow::draw() {
     if (!isAnyKeyPressed) {
         currentState.activeNote = false;
     }
+    params.upDate(currentState);
 
     ImGui::End();
 
-    params.setCopy(currentState);
 }

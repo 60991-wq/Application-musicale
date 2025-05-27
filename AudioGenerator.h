@@ -11,10 +11,6 @@
 #include "audio/Delay.h"
 #include "audio/Envelope.h"
 
-#include <vector>
-
-#include "audio/WavOut.h"
-
 
 class AudioGenerator {
 public:
@@ -35,6 +31,8 @@ private:
     Envelope envelope;
     Filter filter;
     Delay delay;
+
+
     double currentTimeInSeconds {0.0};
     bool previousNoteState {false};
 };

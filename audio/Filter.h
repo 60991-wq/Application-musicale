@@ -3,19 +3,23 @@
 
 class Filter {
 public:
-    Filter();
-    void setSampleRate(float rate);
-    void setCutoff(float newCutoff);
+
+    explicit Filter();
+
+    void setCutoffFrequencyHz(float newCutoffFrequencyHz);
     void setResonance(float newResonance);
-    void process(float* buffer);
+
+    float process(float audioBuffer);
 
 private:
     void updateCoefficients();
-    float sampleRate;
-    float cutoff;
-    float resonance;
-    // Coefficients du filtre
-    float a0, a1, a2, b1, b2;
-    // Variables d'état (une seule série)
-    float x1, x2, y1, y2;
+
+    float cutoffFrequencyHz = 1000.0f; ;
+    float resonance = 0.5f;
+
+    float a0 = 0.0f, a1 = 0.0f, a2 = 0.0f;
+    float b1 = 0.0f, b2 = 0.0f;
+
+    float prevInput1 = 0.0f, prevInput2= 0.0f;
+    float prevOutput1 = 0.0f, prevOutput2= 0.0f;
 };

@@ -1,26 +1,25 @@
 #include "Envelope.h"
 #include <algorithm> // Pour std::clamp
-
 #include "../util/Constants.h"
 
-Envelope::Envelope(double sampleRate)
-    : sampleRate(sampleRate),
+Envelope::Envelope()
+    : sampleRate(Constants::SampleRate),
       currentState(State::IDLE),
       envelopeValue(0.0),
-      attackTime(0.1),
-      releaseTime(0.5),
-      sampleCounter(0),
-      samplesInCurrentStage(0)
+      attackDurationSeconds(0.1),
+      releaseDurationSeconds(0.5),
+      elapsedSamplesInStage(0),
+      totalSamplesInStage(0)
 {
 }
 
-void Envelope::setSampleRate(double rate) {
-    sampleRate = rate;
+void Envelope::setSampleRate(double newSampleRate) {
+    sampleRate = newSampleRate;
 }
 
 void Envelope::setParameters(double attackTimeSeconds, double releaseTimeSeconds) {
-    attackTime = attackTimeSeconds;
-    releaseTime = releaseTimeSeconds;
+    attackDurationSeconds = attackTimeSeconds;
+    releaseDurationSeconds = releaseTimeSeconds;
 }
 
 void Envelope::noteOn() {
@@ -39,60 +38,63 @@ bool Envelope::isRunning() const {
 
 void Envelope::enterState(State newState) {
     currentState = newState;
-    sampleCounter = 0;
+    elapsedSamplesInStage = 0;
 
     switch (currentState) {
         case State::ATTACK:
-            samplesInCurrentStage = static_cast<int>(attackTime * sampleRate);
-        break;
+            totalSamplesInStage = static_cast<int>(attackDurationSeconds * sampleRate);
+            break;
+
         case State::RELEASE:
-            samplesInCurrentStage = static_cast<int>(releaseTime * sampleRate);
-        break;
+            totalSamplesInStage = static_cast<int>(releaseDurationSeconds * sampleRate);
+            break;
+
         case State::SUSTAIN:
         case State::IDLE:
-            samplesInCurrentStage = 0;
-        break;
+            totalSamplesInStage = 0;
+            break;
     }
 }
-void Envelope::process(float* buffer) {
+
+void Envelope::process(float* audioBuffer) {
     for (int i = 0; i < Constants::FramesPerBuffer; ++i) {
         switch (currentState) {
             case State::ATTACK:
-                if (samplesInCurrentStage > 0) {
-                    envelopeValue = static_cast<double>(sampleCounter) / samplesInCurrentStage;
+                if (totalSamplesInStage > 0) {
+                    envelopeValue = static_cast<double>(elapsedSamplesInStage) / totalSamplesInStage;
                 } else {
                     envelopeValue = 1.0;
                 }
-            sampleCounter++;
-            if (sampleCounter >= samplesInCurrentStage) {
-                enterState(State::SUSTAIN);
-            }
-            break;
+
+                elapsedSamplesInStage++;
+                if (elapsedSamplesInStage >= totalSamplesInStage) {
+                    enterState(State::SUSTAIN);
+                }
+                break;
 
             case State::SUSTAIN:
                 envelopeValue = 1.0;
-            break;
+                break;
 
             case State::RELEASE:
-                if (samplesInCurrentStage > 0) {
-                    envelopeValue = 1.0 - (static_cast<double>(sampleCounter) / samplesInCurrentStage);
+                if (totalSamplesInStage > 0) {
+                    envelopeValue = 1.0 - (static_cast<double>(elapsedSamplesInStage) / totalSamplesInStage);
                 } else {
                     envelopeValue = 0.0;
                 }
-            sampleCounter++;
-            if (sampleCounter >= samplesInCurrentStage) {
-                enterState(State::IDLE);
-            }
-            break;
+
+                elapsedSamplesInStage++;
+                if (elapsedSamplesInStage >= totalSamplesInStage) {
+                    enterState(State::IDLE);
+                }
+                break;
 
             case State::IDLE:
                 envelopeValue = 0.0;
-            break;
+                break;
         }
 
-        // Clamp pour éviter les dépassements
         envelopeValue = std::clamp(envelopeValue, 0.0, 1.0);
-
-        buffer[i] *= static_cast<float>(envelopeValue);
+        audioBuffer[i] *= static_cast<float>(envelopeValue);
     }
 }

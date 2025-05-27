@@ -3,6 +3,7 @@
 
 class Envelope {
 public:
+    // États de l'enveloppe
     enum class State {
         IDLE,
         ATTACK,
@@ -10,30 +11,30 @@ public:
         RELEASE,
     };
 
-    explicit Envelope(double sampleRate = 44100.0);
+    explicit Envelope();
 
-    void setSampleRate(double rate);
+    void setSampleRate(double newSampleRate);
     void setParameters(double attackTimeSeconds, double releaseTimeSeconds);
 
-    void noteOn();
-    void noteOff();
+    void noteOn();   // Déclenchement de la note (attaque)
+    void noteOff();  // Fin de la note (relâchement)
 
-    void process(float* buffer);
-    bool isRunning() const;
+    void process(float* audioBuffer);  // Applique l'enveloppe au buffer audio
+    bool isRunning() const;            // Indique si une note est active
 
 private:
-    void enterState(State newState);
+    void enterState(State newState);   // Change d'état et initialise les compteurs
 
     State currentState;
 
     double sampleRate;
     double envelopeValue;
 
-    double attackTime;     // secondes
-    double releaseTime;    // secondes
+    double attackDurationSeconds;
+    double releaseDurationSeconds;
 
-    int sampleCounter;
-    int samplesInCurrentStage;
+    int elapsedSamplesInStage;
+    int totalSamplesInStage;
 };
 
 #endif // ENVELOPE_H

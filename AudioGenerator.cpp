@@ -11,34 +11,31 @@ AudioGenerator::AudioGenerator(LockedSynthParameters &sharedParams)
      {
 }
 
-
-// Fonction d'initialisation PortAudio
 void AudioGenerator::init() {
     PaError errorInit = Pa_Initialize();
     if (errorInit != paNoError) {
         std::cerr << "PortAudio error in Pa_Initialize(): " << Pa_GetErrorText(errorInit) << std::endl;
         return;
     }
-
     PaError errorStream = Pa_OpenDefaultStream(
         &stream,
         0, 2, paFloat32,
         Constants::SampleRate,
         Constants::FramesPerBuffer,
-        &AudioGenerator::audioCallback, // Callback audio
-        this                            // Passage de l'objet AudioGenerator
+        &AudioGenerator::audioCallback,
+        this
     );
     if (errorStream != paNoError) {
         std::cerr << "PortAudio error in Pa_OpenDefaultStream(): " << Pa_GetErrorText(errorStream) << std::endl;
         return;
     }
 
-
     errorStream = Pa_StartStream(stream);
     if (errorStream != paNoError) {
         std::cerr << "PortAudio error in Pa_StartStream(): " << Pa_GetErrorText(errorStream) << '\n';
     }
 }
+
 int AudioGenerator::audioCallback(const void*, void* outputBuffer,
                                   unsigned long framesPerBuffer,
                                   const PaStreamCallbackTimeInfo*,
@@ -48,6 +45,13 @@ int AudioGenerator::audioCallback(const void*, void* outputBuffer,
     float* out = static_cast<float*>(outputBuffer);
 
     SynthParameters paramsSnapshot = generator->params.getCopy();
+    static int debugCounter = 0;
+    if (debugCounter++ % 100 == 0) { // Affiche une fois toutes les 100 callbacks
+        std::cout << "[DEBUG] Cutoff: " << paramsSnapshot.filterCutoffHz
+                  << ", Resonance: " << paramsSnapshot.filterResonance << std::endl;
+    }
+
+
 
     bool currentNoteState = paramsSnapshot.activeNote;
 
@@ -63,13 +67,13 @@ int AudioGenerator::audioCallback(const void*, void* outputBuffer,
     float baseFrequency = 261.63f;
     float noteFreq = baseFrequency * std::pow(2.0f, paramsSnapshot.noteIndex / 12.0f);
 
-    generator->osc1.setFrequency(noteFreq + paramsSnapshot.osc1OFrequencyOffset);
+    generator->osc1.setFrequency(noteFreq + paramsSnapshot.osc1FrequencyOffsetHz);
     generator->osc1.setWaveform(static_cast<Oscillator::Waveform>(paramsSnapshot.osc1Waveform));
 
     generator->osc2.setFrequency(noteFreq);
     generator->osc2.setWaveform(Oscillator::Waveform::SAW);
 
-    generator->envelope.setParameters(paramsSnapshot.attack, paramsSnapshot.release);
+    generator->envelope.setParameters(paramsSnapshot.envelopeAttackSec, paramsSnapshot.envelopeReleaseSec);
 
     float bufferOsc1[Constants::FramesPerBuffer]{};
     float bufferOsc2[Constants::FramesPerBuffer]{};
@@ -85,18 +89,23 @@ int AudioGenerator::audioCallback(const void*, void* outputBuffer,
 
     generator->envelope.process(mixBuffer);
 
-    generator->filter.setCutoff(paramsSnapshot.cutoff);
-    generator->filter.setResonance(paramsSnapshot.resonance);
-    generator->filter.process(mixBuffer);
+    generator->filter.setCutoffFrequencyHz(paramsSnapshot.filterCutoffHz);
+    generator->filter.setResonance(paramsSnapshot.filterResonance);
+    for (unsigned long i = 0; i < framesPerBuffer; ++i) {
+        mixBuffer[i] = generator->filter.process(mixBuffer[i]);
+    }
 
-    generator->delay.setDelayTime(paramsSnapshot.delayTime);
+
+    generator->delay.setDelayTime(paramsSnapshot.delayTimeSec);
     generator->delay.setMix(paramsSnapshot.delayMix);
     generator->delay.process(mixBuffer);
 
+
+
     for (unsigned long i = 0; i < framesPerBuffer; ++i) {
-        out[2*i]     = mixBuffer[i];
-        out[2*i + 1] = mixBuffer[i];
-        generator->wavOut.push_frame(out[2*i], out[2*i + 1]);
+        out[2 * i]     = mixBuffer[i];
+        out[2 * i + 1] = mixBuffer[i];
+        generator->wavOut.push_frame(out[2 * i], out[2 * i + 1]);
     }
 
     generator->currentTimeInSeconds += framesPerBuffer / static_cast<double>(Constants::SampleRate);

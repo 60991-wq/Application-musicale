@@ -1,7 +1,8 @@
 #pragma once
 
 class Oscillator {
-public: // tout les forme d'onde que je dois avoir
+public:
+
     enum class Waveform {
         SINE,
         SQUARE,
@@ -9,18 +10,21 @@ public: // tout les forme d'onde que je dois avoir
     };
 
     explicit Oscillator();
-    
-    void setFrequency(double hz);
-    void setWaveform(Waveform wf);
-    void setSampleRate(double rate);
+
+    void setFrequency(double newFrequencyHz);
+
+    void setWaveform(Waveform newWaveform);
+
+    void setSampleRate(double newSampleRate);
+
     void resetPhase();
 
-    void process(float* buffer);
 
+    void process(float* audioBuffer);
 
 private:
-    double sampleRate;
-    double frequency;
-    double phase;
-    Waveform waveform;
+    double currentSampleRate;
+    double currentFrequencyHz;
+    double phaseRadians;
+    Waveform waveformType;
 };

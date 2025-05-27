@@ -4,17 +4,14 @@
 #include <iostream>
 
 int main() {
-    // Crée un POD sécurisé
     LockedSynthParameters sharedParams;
 
-    // Crée le générateur audio
     AudioGenerator generator(sharedParams);
     generator.init();
 
-    // Crée et lance la fenêtre principale
     MainWindow window(sharedParams);
     window.init();
-    window.run();  // Cette fonction contient la boucle principale et ne retourne que lorsque l'utilisateur ferme la fenêtre
+    window.run();
 
     std::cout << "Application terminée." << std::endl;
     return 0;
