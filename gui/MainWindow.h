@@ -1,6 +1,6 @@
 #ifndef TESTINSTRUCT_MAINWINDOW_H
 #define TESTINSTRUCT_MAINWINDOW_H
-#include "AudioParam.h"
+#include "../audio/AudioParam.h"
 #include <SDL3/SDL.h>
 
 class MainWindow {

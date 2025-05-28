@@ -1,7 +1,10 @@
+//
+// Created by aninia on 25-04-25.
+//
 #include "Oscillator.h"
 #include <cmath>
 #include <iostream>
-#include "../util/Constants.h" // Contient SampleRate et TwoPi
+#include "../util/Constants.h"
 
 Oscillator::Oscillator()
     : currentSampleRate(Constants::SampleRate),

@@ -4,8 +4,8 @@
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_sdlrenderer3.h"
 #include <cmath>
-
-#include "util/Constants.h"
+#include "../audio/AudioParam.h"
+#include "../util/Constants.h"
 
 constexpr float FRAMERATE = 60.0f;
 constexpr std::chrono::duration<double, std::milli> TARGET_FRAMETIME(1000.0 / FRAMERATE);

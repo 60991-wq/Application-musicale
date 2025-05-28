@@ -1,11 +1,15 @@
+//
+// Created by aninia on 25-04-25.
+//
 #include "Delay.h"
 #include "../util/Constants.h"
 
-Delay::Delay() {
+Delay::Delay()
+    : writeIndex(0),
+      delayTime(0.3f),
+      mix(0.2f)
+{
     delayBuffer.resize(Constants::SampleRate * 2, 0.0f);
-    writeIndex = 0;
-    delayTime = 0.3f;
-    mix = 0.2f;
 }
 
 void Delay::setDelayTime(float seconds) {

@@ -11,7 +11,7 @@ include_directories("libraries/imgui/backends"
 )
 
 
-add_executable(60991 main.cpp MainWindow.cpp AudioGenerator.cpp
+add_executable(60991 main.cpp gui/MainWindow.cpp
         ./libraries/imgui/imgui.cpp
         ./libraries/imgui/imgui_demo.cpp
         ./libraries/imgui/imgui_draw.cpp
@@ -28,8 +28,10 @@ add_executable(60991 main.cpp MainWindow.cpp AudioGenerator.cpp
         audio/Delay.cpp
         audio/Delay.h
         util/Constants.h
-        AudioParam.h
-        AudioParam.cpp
+        audio/AudioParam.h
+        audio/AudioParam.cpp
+        audio/AudioGenerator.cpp
+        audio/AudioGenerator.h
         audio/wavOut.h
 )
 if (APPLE)

@@ -1,6 +1,7 @@
+//
+// Created by anini on 25-04-25.
+//
 #include "Filter.h"
-#include <algorithm>
-#include <iostream>
 #include <cmath>
 #include "../util/Constants.h"
 

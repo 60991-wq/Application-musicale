@@ -1,11 +1,10 @@
 #include "AudioGenerator.h"
-#include "util/Constants.h"
+#include "../util/Constants.h"
 #include <iostream>
-#include <algorithm>
 #include <cmath>
-#include "audio/Envelope.h"
+#include "Envelope.h"
 
-#include "audio/Delay.h"
+#include "Delay.h"
 
 AudioGenerator::AudioGenerator(LockedSynthParameters &sharedParams)
     : params(sharedParams), wavOut("dump.wav", Constants::SampleRate) {
@@ -25,8 +24,7 @@ void AudioGenerator::handleNoteEvents(const SynthParameters &paramsSnapshot) {
 
 
 void AudioGenerator::processOscillators(float *outBuffer, const SynthParameters &params, unsigned long numSamples) {
-    float noteFreq = 261.63f * std::pow(2.0f, params.noteIndex / 12.0f);
-
+float noteFreq = 220.0f * std::pow(2.0f, static_cast<float>(params.noteIndex) / 12.0f);
     osc1.setFrequency(noteFreq + params.osc1FrequencyOffsetHz);
     osc1.setWaveform(static_cast<Oscillator::Waveform>(params.osc1Waveform));
 

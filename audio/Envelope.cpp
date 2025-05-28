@@ -1,5 +1,8 @@
+
+// Created by aninia on 25-04-25.
+
 #include "Envelope.h"
-#include <algorithm> // Pour std::clamp
+#include <algorithm>
 #include "../util/Constants.h"
 
 Envelope::Envelope()

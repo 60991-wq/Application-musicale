@@ -4,12 +4,12 @@
 #include <memory>
 
 #include "portaudio.h"
-#include "audio/Oscillator.h"
-#include "audio/Filter.h"
+#include "Oscillator.h"
+#include "Filter.h"
 #include "AudioParam.h"
-#include "audio/WavOut.h"
-#include "audio/Delay.h"
-#include "audio/Envelope.h"
+#include "WavOut.h"
+#include "Delay.h"
+#include "Envelope.h"
 
 
 class AudioGenerator {

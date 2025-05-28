@@ -1,6 +1,6 @@
-#include "MainWindow.h"
-#include "AudioGenerator.h"
-#include "AudioParam.h"
+#include "gui/MainWindow.h"
+#include "audio/AudioGenerator.h"
+#include "audio/AudioParam.h"
 #include <iostream>
 
 int main() {
