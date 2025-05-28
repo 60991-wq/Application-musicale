@@ -8,7 +8,7 @@
 
 Oscillator::Oscillator()
     : currentSampleRate(Constants::SampleRate),
-      currentFrequencyHz(440.0),
+      currentFrequencyHz(0.0),
       phaseRadians(0.0),
       waveformType(Waveform::SINE) {
 }

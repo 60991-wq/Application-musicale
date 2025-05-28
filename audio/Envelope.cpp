@@ -1,102 +1,84 @@
-
 // Created by aninia on 25-04-25.
 
 #include "Envelope.h"
-#include <algorithm>
 #include "../util/Constants.h"
 
-Envelope::Envelope()
-    : sampleRate(Constants::SampleRate),
-      currentState(State::IDLE),
-      envelopeValue(0.0),
-      attackDurationSeconds(0.1),
-      releaseDurationSeconds(0.5),
-      elapsedSamplesInStage(0),
-      totalSamplesInStage(0) {
-}
-
-void Envelope::setSampleRate(double newSampleRate) {
-    sampleRate = newSampleRate;
-}
-
 void Envelope::setParameters(double attackTimeSeconds, double releaseTimeSeconds) {
-    attackDurationSeconds = attackTimeSeconds;
-    releaseDurationSeconds = releaseTimeSeconds;
+    attackDuration = attackTimeSeconds;
+    releaseDuration = releaseTimeSeconds;
+
+    attackFrames = static_cast<int>(Constants::SampleRate * attackDuration);
+    releaseFrames = static_cast<int>(Constants::SampleRate * releaseDuration);
 }
 
 void Envelope::noteOn() {
-    enterState(State::ATTACK);
-}
+    if (currentPhase == State::ATTACK) {
+        return;
+    }
 
-void Envelope::noteOff() {
-    if (currentState == State::ATTACK || currentState == State::SUSTAIN) {
-        enterState(State::RELEASE);
+    currentPhase = State::ATTACK;
+    frameCounter = 0;
+
+    if (currentLevel > 0.0f && attackFrames > 0) {
+        frameCounter = static_cast<int>(currentLevel * attackFrames);
     }
 }
 
-bool Envelope::isRunning() const {
-    return currentState != State::IDLE;
-}
+void Envelope::noteOff() {
+    if (currentPhase == State::RELEASE || currentPhase == State::IDLE) {
+        return;
+    }
 
-void Envelope::enterState(State newState) {
-    currentState = newState;
-    elapsedSamplesInStage = 0;
+    currentPhase = State::RELEASE;
+    frameCounter = 0;
 
-    switch (currentState) {
-        case State::ATTACK:
-            totalSamplesInStage = static_cast<int>(attackDurationSeconds * sampleRate);
-            break;
-
-        case State::RELEASE:
-            totalSamplesInStage = static_cast<int>(releaseDurationSeconds * sampleRate);
-            break;
-
-        case State::SUSTAIN:
-        case State::IDLE:
-            totalSamplesInStage = 0;
-            break;
+    if (currentLevel < 1.0f && releaseFrames > 0) {
+        frameCounter = static_cast<int>((1.0f - currentLevel) * releaseFrames);
     }
 }
 
 void Envelope::process(float *audioBuffer) {
-    for (int i = 0; i < Constants::FramesPerBuffer; ++i) {
-        switch (currentState) {
+    for (int frame = 0; frame < Constants::FramesPerBuffer; ++frame) {
+        switch (currentPhase) {
             case State::ATTACK:
-                if (totalSamplesInStage > 0) {
-                    envelopeValue = static_cast<double>(elapsedSamplesInStage) / totalSamplesInStage;
+                if (attackFrames > 0) {
+                    currentLevel = static_cast<float>(frameCounter) / attackFrames;
+                    if (currentLevel >= 1.0f) {
+                        currentLevel = 1.0f;
+                        currentPhase = State::SUSTAIN;
+                    } else {
+                        frameCounter++;
+                    }
                 } else {
-                    envelopeValue = 1.0;
-                }
-
-                elapsedSamplesInStage++;
-                if (elapsedSamplesInStage >= totalSamplesInStage) {
-                    enterState(State::SUSTAIN);
+                    currentLevel = 1.0f;
+                    currentPhase = State::SUSTAIN;
                 }
                 break;
 
             case State::SUSTAIN:
-                envelopeValue = 1.0;
+                currentLevel = 1.0f;
                 break;
 
             case State::RELEASE:
-                if (totalSamplesInStage > 0) {
-                    envelopeValue = 1.0 - (static_cast<double>(elapsedSamplesInStage) / totalSamplesInStage);
+                if (releaseFrames > 0) {
+                    currentLevel = 1.0f - (static_cast<float>(frameCounter) / releaseFrames);
+                    if (currentLevel <= 0.0f) {
+                        currentLevel = 0.0f;
+                        currentPhase = State::IDLE;
+                    } else {
+                        frameCounter++;
+                    }
                 } else {
-                    envelopeValue = 0.0;
-                }
-
-                elapsedSamplesInStage++;
-                if (elapsedSamplesInStage >= totalSamplesInStage) {
-                    enterState(State::IDLE);
+                    currentLevel = 0.0f;
+                    currentPhase = State::IDLE;
                 }
                 break;
 
             case State::IDLE:
-                envelopeValue = 0.0;
+                currentLevel = 0.0f;
                 break;
         }
 
-        envelopeValue = std::clamp(envelopeValue, 0.0, 1.0);
-        audioBuffer[i] *= static_cast<float>(envelopeValue);
+        audioBuffer[frame] *= currentLevel;
     }
 }

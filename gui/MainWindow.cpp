@@ -184,7 +184,9 @@ void MainWindow::draw() {
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.3f, 0.7f, 0.9f, 1.0f));
         }
 
-        if (ImGui::Button(noteNames[i], ImVec2(30, 30))) {
+        ImGui::Button(noteNames[i], ImVec2(30, 30));
+
+        if (ImGui::IsItemActive()) {
             isAnyKeyPressed = true;
             currentState.activeNote = true;
             currentState.noteIndex = i;

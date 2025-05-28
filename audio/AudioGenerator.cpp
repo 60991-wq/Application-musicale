@@ -12,9 +12,7 @@ AudioGenerator::AudioGenerator(LockedSynthParameters &sharedParams)
 
 void AudioGenerator::handleNoteEvents(const SynthParameters &paramsSnapshot) {
     bool currentNoteState = paramsSnapshot.activeNote;
-    if (currentNoteState && !previousNoteState) {
-        osc1.resetPhase();
-        osc2.resetPhase();
+    if (currentNoteState == true && !previousNoteState) {
         envelope.noteOn();
     } else if (!currentNoteState && previousNoteState) {
         envelope.noteOff();
@@ -24,7 +22,7 @@ void AudioGenerator::handleNoteEvents(const SynthParameters &paramsSnapshot) {
 
 
 void AudioGenerator::processOscillators(float *outBuffer, const SynthParameters &params, unsigned long numSamples) {
-float noteFreq = 220.0f * std::pow(2.0f, static_cast<float>(params.noteIndex) / 12.0f);
+    float noteFreq = 220.0f * std::pow(2.0f, static_cast<float>(params.noteIndex) / 12.0f);
     osc1.setFrequency(noteFreq + params.osc1FrequencyOffsetHz);
     osc1.setWaveform(static_cast<Oscillator::Waveform>(params.osc1Waveform));
 
@@ -105,12 +103,6 @@ int AudioGenerator::audioCallback(const void *, void *outputBuffer,
 
     SynthParameters paramsSnapshot = generator->params.getCopy();
 
-    static int debugCounter = 0;
-    if (debugCounter++ % 100 == 0) {
-        std::cout << "[DEBUG] Cutoff: " << paramsSnapshot.filterCutoffHz
-                << ", Resonance: " << paramsSnapshot.filterResonance << std::endl;
-    }
-
     // Gère les événements de note (note on/off)
     generator->handleNoteEvents(paramsSnapshot);
 
@@ -126,7 +118,6 @@ int AudioGenerator::audioCallback(const void *, void *outputBuffer,
     // Applique l'enveloppe ADSR
     generator->applyEnvelope(mixBuffer);
 
-
     // Applique le filtre passe-bas
     generator->applyFilter(mixBuffer, paramsSnapshot);
 
@@ -135,6 +126,10 @@ int AudioGenerator::audioCallback(const void *, void *outputBuffer,
 
     // Sortie stéréo + enregistrement WAV
     generator->outputToStereo(out, mixBuffer);
+    for (unsigned long i = 0; i < framesPerBuffer; ++i) {
+        float sample = mixBuffer[i];
+        generator->wavOut.push_frame(sample, sample); // stéréo = même valeur sur L/R
+    }
 
     // Mise à jour du temps courant
     generator->currentTimeInSeconds += framesPerBuffer / static_cast<double>(Constants::SampleRate);

@@ -13,33 +13,25 @@ public:
         RELEASE,
     };
 
-    explicit Envelope();
-
-    void setSampleRate(double newSampleRate);
-
     void setParameters(double attackTimeSeconds, double releaseTimeSeconds);
 
     void noteOn();
-
     void noteOff();
+
 
     void process(float *audioBuffer);
 
-    bool isRunning() const;
-
 private:
-    void enterState(State newState);
+    float attackDuration {0.5f};
+    float releaseDuration {1.0f};
+    float currentLevel {0.0f};
+    State currentPhase {State::IDLE};
 
-    State currentState;
+    int frameCounter = 0;
+    int attackFrames = 0;
+    int releaseFrames = 0;
 
-    double sampleRate;
-    double envelopeValue;
 
-    double attackDurationSeconds;
-    double releaseDurationSeconds;
-
-    int elapsedSamplesInStage;
-    int totalSamplesInStage;
 };
 
 #endif // ENVELOPE_H
