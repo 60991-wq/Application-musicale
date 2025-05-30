@@ -7,8 +7,7 @@
 Delay::Delay()
     : writeIndex(0),
       delayTime(0.3f),
-      mix(0.2f)
-{
+      mix(0.2f) {
     delayBuffer.resize(Constants::SampleRate * 2, 0.0f);
 }
 

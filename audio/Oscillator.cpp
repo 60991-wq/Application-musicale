@@ -3,7 +3,6 @@
 //
 #include "Oscillator.h"
 #include <cmath>
-#include <iostream>
 #include "../util/Constants.h"
 
 Oscillator::Oscillator()

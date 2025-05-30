@@ -164,21 +164,21 @@ void MainWindow::draw() {
 
     bool isAnyKeyPressed = false;
 
-    // Vérifier d'abord les touches du clavier
+    // Detects the first pressed key among 13 and activates the corresponding note
     for (int i = 0; i < 13; ++i) {
         if (ImGui::IsKeyDown(keyMap[i])) {
             isAnyKeyPressed = true;
             currentState.activeNote = true;
             currentState.noteIndex = i;
-            break; // On ne joue qu'une note à la fois
+            break;
         }
     }
 
-    // Afficher les boutons et détecter les clics de souris
+    // Displays 13 buttons as notes, highlights the active one, and updates note state on mouse click
     for (int i = 0; i < 13; ++i) {
         ImGui::PushID(i);
 
-        // Mettre le bouton en surbrillance si c'est la note active
+        // Highlight the button if it is the active note
         bool isActive = (currentState.noteIndex == i && currentState.activeNote);
         if (isActive) {
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.3f, 0.7f, 0.9f, 1.0f));

@@ -3,7 +3,6 @@
 #include <iostream>
 #include <cmath>
 #include "Envelope.h"
-
 #include "Delay.h"
 
 AudioGenerator::AudioGenerator(LockedSynthParameters &sharedParams)
@@ -103,10 +102,10 @@ int AudioGenerator::audioCallback(const void *, void *outputBuffer,
 
     SynthParameters paramsSnapshot = generator->params.getCopy();
 
-    // Gère les événements de note (note on/off)
+    // Handles note events (note on/off)
     generator->handleNoteEvents(paramsSnapshot);
 
-    // Génère les signaux des oscillateurs
+    // Generates the oscillator signals
     float mixBuffer[Constants::FramesPerBuffer]{};
     generator->processOscillators(mixBuffer, paramsSnapshot, framesPerBuffer);
 
@@ -115,25 +114,24 @@ int AudioGenerator::audioCallback(const void *, void *outputBuffer,
         paramsSnapshot.envelopeReleaseSec
     );
 
-    // Applique l'enveloppe ADSR
+    // Applies the ASR envelope
     generator->applyEnvelope(mixBuffer);
 
-    // Applique le filtre passe-bas
+    // Applies the low-pass filter
     generator->applyFilter(mixBuffer, paramsSnapshot);
 
-    // Applique l'effet de delay
+    // Applies the delay effect
     generator->applyDelay(mixBuffer, paramsSnapshot);
 
-    // Sortie stéréo + enregistrement WAV
+    // Stereo output + WAV recording
     generator->outputToStereo(out, mixBuffer);
     for (unsigned long i = 0; i < framesPerBuffer; ++i) {
         float sample = mixBuffer[i];
-        generator->wavOut.push_frame(sample, sample); // stéréo = même valeur sur L/R
+        generator->wavOut.push_frame(sample, sample);
     }
 
-    // Mise à jour du temps courant
+    // Update the current time
     generator->currentTimeInSeconds += framesPerBuffer / static_cast<double>(Constants::SampleRate);
-    // generator->wavOut.push_frame()
 
     return paContinue;
 }

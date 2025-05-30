@@ -2,7 +2,6 @@
 #define AUDIOGENERATOR_H
 
 #include <memory>
-
 #include "portaudio.h"
 #include "Oscillator.h"
 #include "Filter.h"

@@ -1,7 +1,6 @@
 // Created by aninia on 25-04-25.
 
 #pragma once
-#include <cmath>
 
 class Filter {
 public:
@@ -16,7 +15,7 @@ public:
 private:
     void updateCoefficients();
 
-    float cutoffFrequencyHz = 1000.0f; ;
+    float cutoffFrequencyHz = 1000.0f;
     float resonance = 0.5f;
 
     float a0 = 0.0f, a1 = 0.0f, a2 = 0.0f;
