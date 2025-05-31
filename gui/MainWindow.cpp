@@ -48,6 +48,10 @@ void MainWindow::init() {
     // Setup DearImGui style
     ImGui::StyleColorsLight();
     ImGui::GetStyle().WindowRounding = 0.0f;
+    ImGuiStyle &style = ImGui::GetStyle();
+    style.FrameRounding = 6.0f;
+    style.GrabRounding = 6.0f;
+
 
     // Setup Platform/Renderer backends
     ImGui_ImplSDL3_InitForSDLRenderer(window, renderer);
@@ -184,7 +188,7 @@ void MainWindow::draw() {
             ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.3f, 0.7f, 0.9f, 1.0f));
         }
 
-        ImGui::Button(noteNames[i], ImVec2(30, 30));
+        ImGui::Button(noteNames[i], ImVec2(38, 30));
 
         if (ImGui::IsItemActive()) {
             isAnyKeyPressed = true;
@@ -204,6 +208,13 @@ void MainWindow::draw() {
     if (!isAnyKeyPressed) {
         currentState.activeNote = false;
     }
+    ImGui::Dummy(ImVec2(0.0f, 10.0f));
+
+
+    ImGui::Text("Note played : %s", currentState.activeNote
+                                        ? std::to_string(currentState.noteIndex + 1).c_str()
+                                        : "-");
+
     params.upDate(currentState);
 
     ImGui::End();

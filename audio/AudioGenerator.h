@@ -27,6 +27,7 @@ public:
 
     void outputToStereo(float *out, const float *monoBuffer);
 
+
 private:
     static int audioCallback(const void *, void *outputBuffer,
                              unsigned long framesPerBuffer,

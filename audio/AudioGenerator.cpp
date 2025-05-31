@@ -91,36 +91,38 @@ void AudioGenerator::init() {
         std::cerr << "PortAudio error in Pa_StartStream(): " << Pa_GetErrorText(errorStream) << '\n';
     }
 }
-
 int AudioGenerator::audioCallback(const void *, void *outputBuffer,
-                                  unsigned long framesPerBuffer,
-                                  const PaStreamCallbackTimeInfo *,
-                                  PaStreamCallbackFlags,
-                                  void *userData) {
+                                 unsigned long framesPerBuffer,
+                                 const PaStreamCallbackTimeInfo *,
+                                 PaStreamCallbackFlags,
+                                 void *userData) {
     auto *generator = static_cast<AudioGenerator *>(userData);
     float *out = static_cast<float *>(outputBuffer);
 
     SynthParameters paramsSnapshot = generator->params.getCopy();
 
-    // Handles note events (note on/off)
+    // Manages note events (note ON/OFF)
     generator->handleNoteEvents(paramsSnapshot);
 
-    // Generates the oscillator signals
+    // Direct audio processing pipeline
     float mixBuffer[Constants::FramesPerBuffer]{};
+
+    // 1. Generate oscillators
     generator->processOscillators(mixBuffer, paramsSnapshot, framesPerBuffer);
 
+    // 2. Configure envelope parameters
     generator->envelope.setParameters(
         paramsSnapshot.envelopeAttackSec,
         paramsSnapshot.envelopeReleaseSec
     );
 
-    // Applies the ASR envelope
+    // 3. Apply AR envelope
     generator->applyEnvelope(mixBuffer);
 
-    // Applies the low-pass filter
+    // 4. Apply low-pass filter
     generator->applyFilter(mixBuffer, paramsSnapshot);
 
-    // Applies the delay effect
+    // 5. Apply delay effect
     generator->applyDelay(mixBuffer, paramsSnapshot);
 
     // Stereo output + WAV recording
@@ -130,7 +132,7 @@ int AudioGenerator::audioCallback(const void *, void *outputBuffer,
         generator->wavOut.push_frame(sample, sample);
     }
 
-    // Update the current time
+    // Update current time
     generator->currentTimeInSeconds += framesPerBuffer / static_cast<double>(Constants::SampleRate);
 
     return paContinue;

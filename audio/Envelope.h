@@ -13,7 +13,7 @@ public:
         RELEASE,
     };
 
-    void setParameters(double attackTimeSeconds, double releaseTimeSeconds);
+    void setParameters(float attackTimeSeconds, float releaseTimeSeconds);
 
     void noteOn();
 
