@@ -72,13 +72,9 @@ main.cpp     Point d'entrée de l'application
 Les sources ou binaires requis de SDL3, PortAudio et Dear ImGui sont inclus dans `libraries/`.
 
 ### Configurer et compiler
+Ouvre le dossier du projet dans CLion
+cliqué sur le boutton vert run `
 
-```bash
-cmake -S . -B build
-cmake --build build --config Debug
-```
-
-L'exécutable est généré sous le nom `synth-60991` (ou `synth-60991.exe` sous Windows). Sur Windows, les DLL SDL3 et PortAudio requises sont copiées automatiquement à côté de l'exécutable par CMake.
 
 ---
 
@@ -89,6 +85,6 @@ Chaque étage de traitement est implémenté comme une classe C++ dédiée. Le m
 ---
 
 
-## 👤 Auteur
+## Auteur
 
 Aninia Abla Negue— 4DEV4D
